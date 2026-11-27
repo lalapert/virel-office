@@ -182,7 +182,7 @@
   .st-prep{color:#9a6a3f; background:#f6ebdd;}
   .drole{margin:11px 0 0; font-size:13px; color:var(--ink2);}
   .dlist{list-style:none; margin:10px 0 0; padding:0; display:grid; gap:6px;}
-  .dlist li{display:flex; gap:7px; font-size:12.5px; color:var(--ink2); align-items:flex-start;}
+  .dlist li{display:flex; gap:7px; font-size:12.5px; color:var(--ink2); align-items:flex-start; word-break:keep-all;}
   .dlist li::before{content:""; width:4px;height:4px;border-radius:50%;background:var(--faint); margin-top:8px; flex:none;}
 
   /* ---------- section titles ---------- */
@@ -243,7 +243,7 @@
   .tbox svg{width:11px;height:11px; opacity:0; transition:opacity .15s ease;}
   .titem.done .tbox{background:var(--wood); border-color:var(--wood);}
   .titem.done .tbox svg{opacity:1;}
-  .titem .txt{flex:1; font-size:13.5px; line-height:1.45; word-break:break-word; padding-top:1px;}
+  .titem .txt{flex:1; font-size:13.5px; line-height:1.45; word-break:keep-all; overflow-wrap:anywhere; padding-top:1px;}
   .titem.done .txt{color:var(--faint); text-decoration:line-through; text-decoration-color:#cfbfab;}
   .del{flex:none; color:#c3b3a0; font-size:15px; line-height:1; padding:3px 5px; margin-top:-1px;}
   .del:active{color:#a8756a;}
@@ -280,7 +280,7 @@
   .duties{margin-top:11px; border-top:1px solid var(--line2); padding-top:2px;}
   .duty{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px dashed var(--line2); font-size:12.5px; color:var(--ink2);}
   .duty:last-child{border-bottom:0; padding-bottom:2px;}
-  .dn{flex:1; min-width:0; line-height:1.4;}
+  .dn{flex:1; min-width:0; line-height:1.4; word-break:keep-all;}
   .ds2{flex:none; font-size:10px; font-weight:700; padding:3px 7px; border-radius:999px;}
   .ds2.on{color:#4a7a51; background:#e8f0e4;}
   .ds2.off{color:#93826f; background:#f1e9de;}
@@ -351,7 +351,7 @@
   .msg.me{align-self:flex-end; align-items:flex-end;}
   .msg.ai{align-self:flex-start;}
   .bubble{
-    font-size:13px; line-height:1.6; white-space:pre-wrap; word-break:break-word;
+    font-size:13px; line-height:1.6; white-space:pre-wrap; word-break:keep-all; overflow-wrap:anywhere;
     padding:10px 12px; border-radius:15px;
   }
   .msg.me .bubble{background:var(--dark); color:#fdf6ec; border-bottom-right-radius:5px;}
