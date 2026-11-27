@@ -1,17 +1,25 @@
 {
+  "id": "./",
   "name": "VIREL Office · 서하 비서실",
   "short_name": "VIREL Office",
-  "description": "VIREL STUDIO 모바일 비서실 대시보드 — 5개 파트 현황과 날짜별 회의실.",
+  "description": "VIREL STUDIO 모바일 비서실 — 팀장 제미나이와 실무 서하의 담당 업무, 날짜별 회의실, 할 일과 메모.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#f7f1e8",
   "theme_color": "#f7f1e8",
   "lang": "ko",
+  "dir": "ltr",
+  "categories": ["productivity", "business"],
   "icons": [
     { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "회의실", "short_name": "회의실", "url": "./#meeting", "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }] },
+    { "name": "작업실", "short_name": "작업실", "url": "./#work", "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }] }
   ]
 }

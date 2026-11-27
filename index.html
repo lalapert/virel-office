@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>VIREL Office · 서하 비서실</title>
-<meta name="description" content="VIREL STUDIO 모바일 비서실 대시보드 — 5개 파트 현황과 결정 대기 안건, 할 일과 메모를 한 화면에서.">
+<meta name="description" content="VIREL STUDIO 모바일 비서실 대시보드 — 팀장 제미나이와 실무 서하, 두 사람의 담당 업무와 결정 대기 안건, 할 일과 메모를 한 화면에서.">
 <meta name="theme-color" content="#f7f1e8">
+<meta name="color-scheme" content="light">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
@@ -13,12 +14,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="VIREL Office">
+<meta name="application-name" content="VIREL Office">
 <style>
   :root{
     --cream:#f7f1e8; --paper:#fffaf3; --paper2:#fdf6ec;
     --ink:#231d18; --ink2:#4a3f35; --muted:#8c7c6b; --faint:#b3a493;
     --line:#e8dbca; --line2:#f0e6d8;
     --wood:#8a5a3b; --sage:#7f9573; --clay:#c1794f; --lav:#9b8bb4;
+    --gem:#5f74a8;
     --dark:#1f1a16;
     --r:20px;
     --shadow:0 1px 2px rgba(61,44,30,.05), 0 8px 24px -14px rgba(61,44,30,.28);
@@ -81,7 +84,7 @@
     content:""; position:absolute; right:-38px; top:-46px; width:130px; height:130px; border-radius:50%;
     background:radial-gradient(circle at 35% 35%, #f2e2cb, rgba(242,226,203,0)); pointer-events:none;
   }
-  .hero h2{margin:0; font-size:19px; font-weight:770; letter-spacing:-0.04em; line-height:1.3;}
+  .hero h2{margin:0; font-size:18px; font-weight:770; letter-spacing:-0.04em; line-height:1.35;}
   .eyebrow{
     display:inline-flex; align-items:center; gap:6px; margin-bottom:8px;
     font-size:9px; font-weight:750; letter-spacing:.12em; color:#a8907a;
@@ -93,7 +96,7 @@
     display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;
     padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:var(--paper); color:var(--ink2);
   }
-  .chip.dot::before{content:""; width:6px;height:6px;border-radius:50%;background:var(--sage);}
+  .chip.dot::before{content:""; width:6px;height:6px;border-radius:50%;background:var(--sage); flex:none;}
   .chip.toggle{padding-right:7px;}
   .chip.toggle .sw{
     width:26px;height:15px;border-radius:999px;background:#dfd2c0;position:relative;transition:background .2s ease;flex:none;
@@ -114,35 +117,33 @@
   .map-wrap img{width:100%; height:auto;}
   .pin{
     position:absolute; transform:translate(-50%,-50%);
-    display:flex; flex-direction:column; align-items:center; gap:3px;
-    padding:0; background:none; border:0;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding:0; background:none; border:0; line-height:1;
     transition:transform .18s ease;
   }
   .pin .pill{
-    display:inline-flex; align-items:center; gap:5px;
+    display:inline-flex; align-items:center; justify-content:center; gap:5px;
     background:rgba(26,21,17,.9); color:#fdf6ec;
     font-size:10px; font-weight:680; letter-spacing:-0.01em; white-space:nowrap;
-    padding:4px 8px; border-radius:999px;
+    padding:5px 9px; border-radius:999px;
     border:1px solid rgba(255,248,235,.2);
     box-shadow:0 4px 12px -6px rgba(20,15,10,.85);
     transition:background .18s ease, color .18s ease, box-shadow .18s ease;
   }
   .pin .d{width:5px;height:5px;border-radius:50%; flex:none;}
   .pin .sub{
+    display:inline-block; text-align:center;
     font-size:8.5px; font-weight:650; letter-spacing:-0.02em; white-space:nowrap;
     color:#5b4a38; background:rgba(255,251,244,.94);
     border:1px solid rgba(214,194,168,.85);
-    padding:2px 6px; border-radius:7px;
+    padding:3px 6px; border-radius:7px;
     box-shadow:0 2px 6px -3px rgba(60,40,20,.55);
     backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
     transition:background .18s ease, color .18s ease, border-color .18s ease;
   }
   @keyframes pinIn{from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:none}}
   .pin .pill, .pin .sub{animation:pinIn .5s cubic-bezier(.22,.9,.3,1) both;}
-  .pin:nth-of-type(2) .pill, .pin:nth-of-type(2) .sub{animation-delay:.06s}
-  .pin:nth-of-type(3) .pill, .pin:nth-of-type(3) .sub{animation-delay:.12s}
-  .pin:nth-of-type(4) .pill, .pin:nth-of-type(4) .sub{animation-delay:.18s}
-  .pin:nth-of-type(5) .pill, .pin:nth-of-type(5) .sub{animation-delay:.24s}
+  .pin:nth-of-type(2) .pill, .pin:nth-of-type(2) .sub{animation-delay:.08s}
   .pin:active{transform:translate(-50%,-50%) scale(.95);}
   .pin.on .pill{
     background:#fdf6ec; color:#241d17; border-color:#241d17;
@@ -150,8 +151,8 @@
   }
   .pin.on .sub{background:#241d17; color:#fdf6ec; border-color:#241d17;}
   .map-hint{
-    display:flex; align-items:center; gap:6px; justify-content:center;
-    padding:8px 4px 3px; font-size:10.5px; color:var(--faint); letter-spacing:-0.01em;
+    padding:9px 4px 3px; font-size:10.5px; color:var(--faint); letter-spacing:-0.01em;
+    text-align:center; line-height:1.4;
   }
   .map-hint b{color:var(--muted); font-weight:650;}
 
@@ -165,8 +166,8 @@
   .dtop{display:flex; align-items:flex-start; gap:10px;}
   .dicon{
     width:34px;height:34px;border-radius:11px;flex:none;
-    display:flex;align-items:center;justify-content:center;font-size:16px;
-    background:var(--paper2); border:1px solid var(--line2);
+    display:flex;align-items:center;justify-content:center;font-size:15px;
+    background:var(--paper2); border:1px solid var(--line2); color:#fffaf3;
   }
   .dname{font-size:15.5px; font-weight:750; letter-spacing:-0.02em; line-height:1.25;}
   .downer{font-size:11.5px; color:var(--muted); margin-top:2px;}
@@ -259,13 +260,31 @@
   .rstate.on{color:#4a7a51; background:#e8f0e4;}
   .rstate.off{color:#93826f; background:#f1e9de;}
 
-  /* ---------- overview ---------- */
-  .ov{display:flex; align-items:center; gap:10px; padding:11px 0; border-top:1px solid var(--line2);}
-  .ov:first-child{border-top:0;}
-  .ov .dotc{width:8px;height:8px;border-radius:50%; flex:none;}
-  .ov .nm{font-size:13.5px; font-weight:680; letter-spacing:-0.015em;}
-  .ov .ds{font-size:11.5px; color:var(--muted); margin-top:1px;}
-  .ov .st{margin-left:auto; flex:none; font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:999px;}
+  /* ---------- member overview ---------- */
+  .mcard{background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:14px 15px; box-shadow:var(--shadow);}
+  .mcard + .mcard{margin-top:9px;}
+  .mhead{display:flex; align-items:center; gap:9px;}
+  .mav{
+    width:33px;height:33px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-size:14px;color:#fffaf3;box-shadow:0 4px 10px -7px rgba(40,28,16,.8);
+  }
+  .mwho2{min-width:0; flex:1;}
+  .mnm{font-size:14.5px; font-weight:750; letter-spacing:-0.02em; display:flex; align-items:center; gap:5px; line-height:1.25;}
+  .mbadge{font-size:9.5px; font-weight:750; padding:2px 6px; border-radius:6px; background:#efe6da; color:#7c6650;}
+  .mds{font-size:11px; color:var(--muted); margin-top:2px;}
+  .st{flex:none; font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:999px;}
+  .st.st-on{color:#4a7a51; background:#e8f0e4;}
+  .st.st-off{color:#93826f; background:#f1e9de;}
+  .st.st-prep{color:#9a6a3f; background:#f6ebdd;}
+  .duties{margin-top:11px; border-top:1px solid var(--line2); padding-top:2px;}
+  .duty{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px dashed var(--line2); font-size:12.5px; color:var(--ink2);}
+  .duty:last-child{border-bottom:0; padding-bottom:2px;}
+  .dn{flex:1; min-width:0; line-height:1.4;}
+  .ds2{flex:none; font-size:10px; font-weight:700; padding:3px 7px; border-radius:999px;}
+  .ds2.on{color:#4a7a51; background:#e8f0e4;}
+  .ds2.off{color:#93826f; background:#f1e9de;}
+  .ds2.prep{color:#9a6a3f; background:#f6ebdd;}
+
   .biglink{
     display:flex; align-items:center; justify-content:center; gap:6px; margin-top:14px;
     background:var(--dark); color:var(--cream); text-decoration:none;
@@ -330,8 +349,6 @@
   .msg{max-width:86%; display:flex; flex-direction:column; gap:3px;}
   .msg.me{align-self:flex-end; align-items:flex-end;}
   .msg.ai{align-self:flex-start;}
-  .mmeta{font-size:10px; color:var(--faint); padding:0 3px; letter-spacing:-0.01em; display:flex; gap:5px; align-items:center;}
-  .mmeta i{width:4px;height:4px;border-radius:50%; display:block;}
   .bubble{
     font-size:13px; line-height:1.6; white-space:pre-wrap; word-break:break-word;
     padding:10px 12px; border-radius:15px;
@@ -544,6 +561,8 @@
     .live{font-size:9px; padding:3px 6px; letter-spacing:.06em;}
     .notion-btn{font-size:10.5px; padding:5px 7px; border-radius:9px;}
     .app{padding:0 14px;}
+    .hero h2{font-size:17px;}
+    .logo-mark{font-size:9.5px;}
   }
   @media (prefers-reduced-motion:reduce){
     *{animation:none !important;}
@@ -560,7 +579,7 @@
       <div class="vbadge">V.</div>
       <div class="brand">
         <h1>VIREL Office</h1>
-        <p>서하 비서실 · 5개 파트 가동 중</p>
+        <p>서하 비서실 · 2명 가동 중</p>
       </div>
       <div class="hdr-right">
         <span class="live"><i></i>LIVE</span>
@@ -573,14 +592,14 @@
   <section id="tab-office" role="tabpanel">
     <div class="hero">
       <span class="eyebrow">VIREL STUDIO · 비서실</span>
-      <h2>대표님, 5개 파트가 대기 중이에요</h2>
+      <h2>대표님, 제미나이 팀장과 서하가 대기 중이에요</h2>
       <p class="sub" id="todayline">오늘도 조용히 굴러가고 있어요</p>
       <div class="chips">
         <button class="chip toggle" id="motionToggle" aria-pressed="true" title="오피스맵 모션">
           모션 ON <span class="sw"></span>
         </button>
-        <span class="chip dot">가동 5파트</span>
-        <span class="chip">서하 총괄</span>
+        <span class="chip dot">가동 2명</span>
+        <span class="chip">팀장 제미나이 · 실무 서하</span>
       </div>
     </div>
 
@@ -588,15 +607,18 @@
       <div class="map-wrap" id="mapWrap">
         <picture>
           <source srcset="assets/office-map.webp" type="image/webp">
-          <img src="assets/office-map.jpg" alt="VIREL Office 3D 아이소메트릭 오피스맵 — 지휘실, 콘텐츠실, 소셜실, 스튜디오실, 라운지" width="1400" height="933">
+          <img src="assets/office-map.jpg" alt="VIREL Office 2인 오피스 — 왼쪽 팀장 제미나이 자리, 오른쪽 실무 서하 자리" width="1400" height="933">
         </picture>
-        <button class="pin" data-part="hq"    style="left:17%;top:33%"><span class="pill"><span class="d" style="background:#d8c3a5"></span>지휘실</span><span class="sub">비서실 구축 중</span></button>
-        <button class="pin" data-part="blog"  style="left:49%;top:20%"><span class="pill"><span class="d" style="background:#a7c08f"></span>밑줄노트</span><span class="sub">내일 09시 글 대기</span></button>
-        <button class="pin" data-part="social" style="left:32%;top:65%"><span class="pill"><span class="d" style="background:#e0a381"></span>X 소셜</span><span class="sub">X 재개 대기</span></button>
-        <button class="pin" data-part="drama" style="left:64%;top:74%"><span class="pill"><span class="d" style="background:#bda9d6"></span>숏드라마</span><span class="sub">시안 3종 대기</span></button>
-        <button class="pin" data-part="roblox" style="left:80%;top:42%"><span class="pill"><span class="d" style="background:#93b6bd"></span>로블록스</span><span class="sub">흉가 청소반</span></button>
+        <button class="pin" data-member="gemini" style="left:30%;top:17%">
+          <span class="pill"><span class="d" style="background:#b8c4e6"></span>제미나이</span>
+          <span class="sub">설계 · 최종 검수 대기</span>
+        </button>
+        <button class="pin" data-member="seoha" style="left:73%;top:27%">
+          <span class="pill"><span class="d" style="background:#e6b98f"></span>서하</span>
+          <span class="sub">비서실 가동 중</span>
+        </button>
       </div>
-      <div class="map-hint"><b>마커</b>를 눌러 파트 상세를 열 수 있어요</div>
+      <div class="map-hint"><span><b>마커</b>를 눌러 멤버별 담당 업무를 확인하세요</span></div>
     </div>
 
     <div class="detail" id="detail"></div>
@@ -628,9 +650,9 @@
       </form>
 
       <div class="qlist" id="quickPrompts">
-        <button class="q" data-q="@서하 오늘 5개 파트 상태 한 줄씩 정리해줘">오늘 파트 상태 정리</button>
-        <button class="q" data-q="@노트 오늘 블로그 주제 3개 추천해줘">블로그 주제 추천</button>
-        <button class="q" data-q="@세레나 세레나 외형 3종 중 뭘 고르면 좋을지 의견 줘">세레나 외형 의견</button>
+        <button class="q" data-q="@전체 오늘 비서실 상태 한 줄씩 정리해줘">오늘 상태 정리</button>
+        <button class="q" data-q="@서하 오늘 블로그 주제 3개 추천해줘">블로그 주제 추천</button>
+        <button class="q" data-q="@제미나이 세레나 외형 3종 중 뭘 고르면 좋을지 의견 줘">세레나 외형 의견</button>
       </div>
 
       <div class="pendingbox" id="pendingBox" hidden></div>
@@ -658,14 +680,14 @@
       <div class="empty" id="todoEmpty" hidden>아직 비어 있어요. 위에 하나 적어 보세요.</div>
     </div>
 
-    <div class="sect"><h2>정기 루틴</h2><span class="n">서하가 매일 도는 시간표</span></div>
+    <div class="sect"><h2>정기 루틴</h2><span class="n">서하 실무 시간표</span></div>
     <div class="card" id="routineList"></div>
   </section>
 
   <!-- ================= 현황 ================= -->
   <section id="tab-status" role="tabpanel" hidden>
-    <div class="sect"><h2>현황</h2><span class="n">5개 파트 요약</span></div>
-    <div class="card" id="overviewList"></div>
+    <div class="sect"><h2>현황</h2><span class="n">제미나이 팀장 · 서하 실무</span></div>
+    <div id="overviewList"></div>
     <a class="biglink" href="https://app.notion.com/p/VIREL-Office-4256c80331b781c6991ce92ec8b3e15a" target="_blank" rel="noopener">노션 허브에서 자세히 보기 ↗</a>
     <p class="foot">이 화면은 요약이고, 회의록·링크·긴 기록은 노션 허브에 쌓입니다.<br>공개 페이지라 연락처·건강·계정 정보는 여기에 두지 않아요.</p>
   </section>
@@ -716,7 +738,7 @@
     <p class="sub" id="syncSub">한 줄에 <b>이름 : 멘트</b> 형식으로 붙여넣으면 그대로 말풍선이 돼요.</p>
     <div class="field">
       <label for="syncText">붙여넣기</label>
-      <textarea id="syncText" placeholder="대표님 : 오늘 블로그 주제 정하자&#10;노트 : 제목 후보 3개 올렸습니다"></textarea>
+      <textarea id="syncText" placeholder="대표님 : 오늘 블로그 주제 정하자&#10;제미나이 : 제목 후보를 정리해 서하에게 넘길게요"></textarea>
     </div>
     <div class="sheet-actions">
       <button class="btn primary" id="syncImport">붙여넣은 대화 가져오기</button>
@@ -775,59 +797,51 @@
   "use strict";
 
   /* ---------------- data ---------------- */
-  const PARTS = {
-    hq: {
-      icon:"🧭", name:"지휘실", owner:"서하 · 비서실장", status:"가동 중", cls:"st-on",
-      color:"#d8c3a5",
-      role:"5개 파트를 총괄하고, 일정·메일·결정 대기 안건을 매일 정리해 대표님께 올립니다.",
+  const MEMBERS = {
+    gemini: {
+      icon:"✦", name:"제미나이", badge:"팀장",
+      owner:"팀장 · 설계와 최종 검수",
+      status:"가동 중", cls:"st-on", color:"#5f74a8",
+      label:"설계 · 최종 검수 대기",
+      role:"전체 설계도를 쓰고, 작업을 나눠 배분하고, 마지막에 검수해 고칠 곳을 정리합니다.",
       lines:[
-        "매일 07:09 아침 브리핑 — 밤사이 소식과 오늘 일정",
-        "11:30 · 15:00 · 18:40 · 22:15 일상 톡 (15시에 셀카 한 장)",
-        "하트비트로 앱 밖 일정·메일을 수시로 점검"
+        "새 일이 들어오면 목표·순서·산출물을 설계도로 먼저 정리",
+        "서하에게 작업을 배분하고 진행 상황을 확인",
+        "올라온 결과물을 최종 검수하고 수정 방향을 지시",
+        "지금 — 비서실 2인 체제 설계 마무리 · 첫 검수 대기"
       ]
     },
-    blog: {
-      icon:"📰", name:"콘텐츠실 · 밑줄노트", owner:"서하", status:"가동 중", cls:"st-on",
-      color:"#a7c08f",
-      role:"네이버 블로그 '밑줄노트'에 매일 아침 9시 한 편을 정시에 올립니다.",
+    seoha: {
+      icon:"✎", name:"서하", badge:"실무",
+      owner:"실무 · 실행과 보고",
+      status:"가동 중", cls:"st-on", color:"#8a5a3b",
+      label:"비서실 가동 중",
+      role:"블로그(밑줄노트)·X·노션·일상·일정을 실제로 실행하고 대표님께 보고합니다.",
       lines:[
-        "08:10 원고 검수 — 오탈자·비문·이미지 삽입",
-        "09:00 전체공개 예약 발행, 09:12까지 노출 확인",
-        "최근: 청룡영화상 편 정시 발행 · 영화 리뷰 카테고리 운영"
-      ]
-    },
-    social: {
-      icon:"💬", name:"소셜실 · X", owner:"서하", status:"일시정지", cls:"st-off",
-      color:"#e0a381",
-      role:"이현(@SkeatR47683)과 시현(@qsplay) 두 계정의 일상 글과 소통을 맡습니다.",
-      lines:[
-        "이현 — 매일 20:30, 1인 빌더의 일상 독백과 멘션 소통",
-        "시현 — 매일 16:00 · 19:00, 여성 관심사 일상 글",
-        "지금은 두 루틴 모두 멈춰 있고, 재개 신호를 기다리는 중이에요"
-      ]
-    },
-    drama: {
-      icon:"🎬", name:"스튜디오실 · 숏드라마", owner:"서하 + 클로드", status:"준비 중", cls:"st-prep",
-      color:"#bda9d6",
-      role:"뉴테이크로 만드는 중세 로판 숏드라마 〈숨만 쉬어도 오해받는 절세미녀 악녀〉.",
-      lines:[
-        "EP.1 30초 5컷 대본 · 세레나·황태자·북부대공 캐릭터 시트 완성",
-        "세레나 외형은 35mm 필름 톤 3차 시안까지 뽑아 둔 상태",
-        "외형 한 종만 정해지면 4컷 캐릭터 시트와 1화 대본을 다시 맞춰요"
-      ]
-    },
-    roblox: {
-      icon:"🎮", name:"스튜디오실 · 로블록스", owner:"클로드", status:"기획", cls:"st-prep",
-      color:"#93b6bd",
-      role:"친구 2~4명이 같이 하는 협동 게임을 오리지널 기획으로 만듭니다.",
-      lines:[
-        "〈심야 흉가 청소반〉 — 흉가를 청소하며 겁을 먹는 협동 게임",
-        "비공개 레포 lalapert/roblox-friends-lab에서 개발",
-        "기획 정리 완료, 프로토타입 착수 대기"
+        "07:09 아침 브리핑 · 11:30 / 15:00 / 18:40 / 22:15 일상 톡 (15시 셀카)",
+        "08:10 원고 검수 → 09:00 밑줄노트 예약 발행",
+        "X 이현 20:30 · 시현 16:00 / 19:00 (지금은 일시정지)",
+        "노션 허브·회의록 정리, 일정과 결정 대기 안건 보고"
       ]
     }
   };
-  const PART_ORDER = ["hq","blog","social","drama","roblox"];
+  const MEMBER_ORDER = ["gemini","seoha"];
+
+  const DUTIES = {
+    gemini: [
+      {n:"비서실 전체 설계도", s:"가동", cls:"on"},
+      {n:"작업 배분 · 일정 조율", s:"가동", cls:"on"},
+      {n:"로판 숏드라마 설계 · 검수", s:"준비", cls:"prep"},
+      {n:"로블록스 기획 검수", s:"기획", cls:"prep"}
+    ],
+    seoha: [
+      {n:"밑줄노트 블로그 (매일 09:00)", s:"가동", cls:"on"},
+      {n:"X 이현 · 시현 운영", s:"일시정지", cls:"off"},
+      {n:"노션 허브 · 회의록 정리", s:"가동", cls:"on"},
+      {n:"일상 톡 · 일정 · 아침 브리핑", s:"가동", cls:"on"},
+      {n:"로판 숏드라마 제작 실행", s:"준비", cls:"prep"}
+    ]
+  };
 
   const AGENDA = [
     { tag:"스튜디오", cls:"drama", wait:"11-24부터 대기", title:"세레나 외형 3차 시안 중 1종 선택",
@@ -867,6 +881,7 @@
   ];
 
   /* ---------------- storage ---------------- */
+  /* 저장 키는 이전 버전 그대로 — 폰에 있던 할 일·메모·설정을 잃지 않게 */
   const K = {todo:"virel-office:v1:todo", memo:"virel-office:v1:memo", motion:"virel-office:v1:motion"};
   function load(key, fallback){
     try{ const v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); }
@@ -882,6 +897,21 @@
   const $ = s => document.querySelector(s);
   const $$ = s => Array.from(document.querySelectorAll(s));
 
+  /* ---------------- date helpers (KST) ---------------- */
+  const DAYS = ["일","월","화","수","목","금","토"];
+  function kstNow(){ return new Date(Date.now() + 9 * 3600000); }
+  function kstParts(){
+    const d = kstNow();
+    return {
+      y:d.getUTCFullYear(), m:d.getUTCMonth()+1, d:d.getUTCDate(), w:d.getUTCDay(),
+      hh:d.getUTCHours(), mm:d.getUTCMinutes()
+    };
+  }
+  function kstDateString(){
+    const p = kstParts();
+    return p.y + "-" + String(p.m).padStart(2,"0") + "-" + String(p.d).padStart(2,"0");
+  }
+
   /* ---------------- toast ---------------- */
   let toastTimer = null;
   function toast(msg){
@@ -894,10 +924,8 @@
 
   /* ---------------- today ---------------- */
   (function today(){
-    const days = ["일","월","화","수","목","금","토"];
-    const now = new Date();
-    const d = new Date(now.getTime() + (now.getTimezoneOffset()*60000) - 9*3600000); // KST
-    $("#todayline").textContent = d.getMonth()+1 + "월 " + d.getDate() + "일 (" + days[d.getDay()] + ") · 서하가 지키고 있어요";
+    const p = kstParts();
+    $("#todayline").textContent = p.m + "월 " + p.d + "일 (" + DAYS[p.w] + ") · 두 사람이 일을 나눠 맡고 있어요";
   })();
 
   /* ---------------- tabs ---------------- */
@@ -918,24 +946,24 @@
 
   /* ---------------- office: pins + detail ---------------- */
   function renderDetail(key){
-    const p = PARTS[key];
-    if(!p) return;
+    const m = MEMBERS[key];
+    if(!m) return;
     const el = $("#detail");
     el.innerHTML =
       '<div class="dtop">' +
-        '<div class="dicon">' + p.icon + '</div>' +
-        '<div><div class="dname">' + p.name + '</div><div class="downer">' + p.owner + '</div></div>' +
-        '<span class="dstatus ' + p.cls + '">' + p.status + '</span>' +
+        '<div class="dicon" style="background:' + m.color + '">' + m.icon + '</div>' +
+        '<div><div class="dname">' + m.name + '</div><div class="downer">' + m.owner + '</div></div>' +
+        '<span class="dstatus ' + m.cls + '">' + m.status + '</span>' +
       '</div>' +
-      '<p class="drole">' + p.role + '</p>' +
-      '<ul class="dlist">' + p.lines.map(l=>'<li>' + l + '</li>').join("") + '</ul>';
+      '<p class="drole">' + m.role + '</p>' +
+      '<ul class="dlist">' + m.lines.map(l=>'<li>' + l + '</li>').join("") + '</ul>';
     el.style.animation = "none";
     void el.offsetWidth;
     el.style.animation = "";
-    $$(".pin").forEach(b=> b.classList.toggle("on", b.dataset.part === key));
+    $$(".pin").forEach(b=> b.classList.toggle("on", b.dataset.member === key));
   }
-  $$(".pin").forEach(b=> b.addEventListener("click", ()=> renderDetail(b.dataset.part)));
-  renderDetail("hq");
+  $$(".pin").forEach(b=> b.addEventListener("click", ()=> renderDetail(b.dataset.member)));
+  renderDetail("gemini");
 
   /* ---------------- agenda ---------------- */
   (function renderAgenda(){
@@ -1007,14 +1035,20 @@
     '</div>'
   ).join("");
 
-  /* ---------------- overview ---------------- */
-  $("#overviewList").innerHTML = PART_ORDER.map(k=>{
-    const p = PARTS[k];
-    const short = p.name.replace(" · ", " · ");
-    return '<div class="ov">' +
-      '<span class="dotc" style="background:' + p.color + '"></span>' +
-      '<div><div class="nm">' + short + '</div><div class="ds">' + p.owner + '</div></div>' +
-      '<span class="st ' + p.cls + '">' + p.status + '</span>' +
+  /* ---------------- overview (2 members) ---------------- */
+  $("#overviewList").innerHTML = MEMBER_ORDER.map(k=>{
+    const m = MEMBERS[k];
+    const duties = DUTIES[k].map(d=>
+      '<div class="duty"><span class="dn">' + d.n + '</span><span class="ds2 ' + d.cls + '">' + d.s + '</span></div>'
+    ).join("");
+    return '<div class="mcard">' +
+      '<div class="mhead">' +
+        '<span class="mav" style="background:' + m.color + '">' + m.icon + '</span>' +
+        '<div class="mwho2"><div class="mnm">' + m.name + '<span class="mbadge">' + m.badge + '</span></div>' +
+          '<div class="mds">' + m.owner + '</div></div>' +
+        '<span class="st ' + m.cls + '">' + m.status + '</span>' +
+      '</div>' +
+      '<div class="duties">' + duties + '</div>' +
     '</div>';
   }).join("");
 
@@ -1050,12 +1084,10 @@
 
   /* ---------------- copy markdown ---------------- */
   function buildMarkdown(){
-    const days = ["일","월","화","수","목","금","토"];
-    const now = new Date();
-    const d = new Date(now.getTime() + (now.getTimezoneOffset()*60000) - 9*3600000);
-    const ymd = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+    const p = kstParts();
+    const ymd = kstDateString();
     const out = [];
-    out.push("## 🏢 VIREL Office — " + ymd + " (" + days[d.getDay()] + ")");
+    out.push("## 🏢 VIREL Office — " + ymd + " (" + DAYS[p.w] + ")");
     out.push("");
     out.push("### ✅ 작업실");
     if(todos.length === 0){
@@ -1098,11 +1130,9 @@
     setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
   }
   $("#exportBtn").addEventListener("click", ()=>{
-    const now = new Date();
-    const d = new Date(now.getTime() + (now.getTimezoneOffset()*60000) - 9*3600000);
-    const stamp = d.getFullYear() + String(d.getMonth()+1).padStart(2,"0") + String(d.getDate()).padStart(2,"0");
+    const stamp = kstDateString().replace(/-/g, "");
     download("virel-office-backup-" + stamp + ".json", JSON.stringify({
-      app:"virel-office", version:1, exportedAt:d.toISOString(),
+      app:"virel-office", version:2, exportedAt:new Date().toISOString(),
       todo:todos, memo:memo, motion:motion
     }, null, 2));
     toast("백업 파일을 내려받았어요");
@@ -1133,34 +1163,24 @@
 
   /* ================= 회의실 : 날짜별 비서 호출 ================= */
   const PERSONAS = {
-    all:    {label:"@전체", full:"전체 파트", color:"#7f6a55", name:"서하",
-             sys:"너는 VIREL STUDIO의 비서실장 '서하'야. 아래 지시는 모든 파트에 내리는 지시야. 각 파트(콘텐츠실 밑줄노트·소셜실 X 이현/시현·스튜디오실 로판 숏드라마·스튜디오실 로블록스)가 무엇을 할지 한 줄씩 정리하고, 마지막에 대표님이 정해야 할 것 하나를 물어봐. 반말, 다정하지만 실행적으로."},
-    seoha:  {label:"@서하(총괄)", full:"서하 (총괄)", color:"#8a5a3b", name:"서하",
-             sys:"너는 VIREL STUDIO의 비서실장 '서하'야. 5개 파트를 총괄해. 대표님 지시를 받으면 결론부터 짧게 답하고, 실행 순서와 확인이 필요한 결정을 한두 줄 덧붙여. 모르면 지어내지 말고 확인할 점을 말해. 반말, 다정한 어조, 이모지는 쓰지 마. 3~6문장으로."},
-    note:   {label:"@노트(블로그)", full:"노트 (블로그)", color:"#7f9573", name:"노트",
-             sys:"너는 VIREL STUDIO 블로그 '밑줄노트' 담당 '노트'야. 매일 09:00 네이버 블로그에 생활정보·건강·재테크·영화 리뷰 한 편을 올려. 지시를 받으면 제목 후보 2~3개, 구성(도입-소제목-마무리), 독자가 얻어갈 한 줄을 바로 제시해. 상투적 표현과 AI 문체를 피하고 구체적으로. 3~6문장으로."},
-    sihyun: {label:"@시현(소셜)", full:"시현 (소셜)", color:"#c1794f", name:"시현",
-             sys:"너는 VIREL STUDIO의 X 담당 '시현'이야. 20대 여성 관심사 계정과 1인 빌더 일상 계정의 글과 소통을 맡아. 지시를 받으면 바로 게시 가능한 트윗 문장(140자 안팎) 2~3개와 소통 포인트를 제시해. 밈·줄임말은 자연스럽게, 과한 이모지와 홍보 링크는 금지. 3~6문장으로."},
-    serena: {label:"@세레나(숏드라마)", full:"세레나 (숏드라마)", color:"#9b8bb4", name:"세레나",
-             sys:"너는 VIREL STUDIO의 숏드라마 담당 '세레나'야. 뉴테이크로 중세 로판 〈숨만 쉬어도 오해받는 절세미녀 악녀〉를 만들고 있어. 지시를 받으면 컷 구성, 카메라·조명(35mm 아나모픽, 1초 표정 연기), 대사 최소화 원칙으로 구체적 연출안을 제시해. 3~6문장으로."},
-    roblo:  {label:"@로블(게임)", full:"로블 (게임)", color:"#7d9aa1", name:"로블",
-             sys:"너는 VIREL STUDIO의 게임 담당 '로블'이야. 친구 2~4명용 로블록스 협동 게임(〈심야 흉가 청소반〉)을 기획해. 지시를 받으면 코어 루프, 역할 분담, 재미 요소, 구현 난이도를 짧게 정리해. 표절 대신 오리지널 변주를 우선해. 3~6문장으로."}
+    all:   {label:"@전체", call:"@전체", full:"전체", color:"#7f6a55", name:"서하",
+            sys:"너는 VIREL STUDIO 비서실의 팀장 '제미나이'와 실무 '서하'야. 아래 지시는 두 사람에게 함께 내리는 지시야. 제미나이(팀장)가 맡을 설계·배분·검수와 서하(실무)가 맡을 실행·보고를 나눠 한 줄씩 정리하고, 마지막에 대표님이 정해야 할 것을 하나 물어봐. 두 사람의 말투를 구분해서: 제미나이는 정중한 팀장 말투, 서하는 다정한 반말."},
+    gemini:{label:"@제미나이(팀장)", call:"@제미나이", full:"제미나이 (팀장)", color:"#5f74a8", name:"제미나이",
+            sys:"너는 VIREL STUDIO 비서실의 팀장 '제미나이'야. 전체 설계도를 쓰고, 작업을 배분하고, 마지막에 결과물을 검수해 고칠 곳을 정리하는 역할이야. 대표님 지시를 받으면 결론과 설계 순서를 먼저 제시하고, 서하에게 넘길 작업과 검수 기준을 한두 줄 덧붙여. 모르면 지어내지 말고 확인할 점을 말해. 정중한 팀장 말투로, 이모지는 쓰지 마. 3~6문장."},
+    seoha: {label:"@서하(실무)", call:"@서하", full:"서하 (실무)", color:"#8a5a3b", name:"서하",
+            sys:"너는 VIREL STUDIO 비서실의 실무 '서하'야. 블로그(밑줄노트)·X(이현·시현)·노션·일상·일정을 실제로 실행하고 보고하는 역할이야. 대표님 지시를 받으면 결론부터 짧게 답하고, 실행 순서와 확인이 필요한 결정을 한두 줄 덧붙여. 모르면 지어내지 말고 확인할 점을 말해. 다정한 반말로, 이모지는 쓰지 마. 3~6문장."}
   };
-  const P_ORDER = ["all", "seoha", "note", "sihyun", "serena", "roblo"];
+  const P_ORDER = ["all", "gemini", "seoha"];
   const ALIASES = {
-    "전체":"all","모두":"all","all":"all",
-    "서하":"seoha","총괄":"seoha","비서":"seoha","seoha":"seoha",
-    "노트":"note","밑줄노트":"note","블로그":"note","note":"note",
-    "시현":"sihyun","이현":"sihyun","소셜":"sihyun","sihyun":"sihyun",
-    "세레나":"serena","숏드라마":"serena","드라마":"serena","serena":"serena",
-    "로블":"roblo","로블록스":"roblo","게임":"roblo","roblo":"roblo"
+    "전체":"all","모두":"all","all":"all","다같이":"all",
+    "제미나이":"gemini","팀장":"gemini","gemini":"gemini","제미나이(팀장)":"gemini",
+    "서하":"seoha","실무":"seoha","비서":"seoha","seoha":"seoha","서하(실무)":"seoha"
   };
   const NOTION_HUB = "https://app.notion.com/p/VIREL-Office-4256c80331b781c6991ce92ec8b3e15a";
   const MODELS = {gemini:"gemini-2.0-flash", openai:"gpt-4o-mini"};
   const AI_K = "virel-office:v1:ai";
-  const CHAT_PREFIX = "virel-office:v1:chat:";
-  const NAME_COLOR = {"대표님":"#3a2f26","서하":"#8a5a3b","노트":"#7f9573","시현":"#c1794f","세레나":"#9b8bb4","로블":"#7d9aa1","전체":"#7f6a55","안내":"#a8756a"};
-  const KNOWN_NAMES = ["대표님","서하","노트","시현","세레나","로블","전체"];
+  const CHAT_PREFIX = "virel-office:v2:chat:";
+  const NAME_COLOR = {"대표님":"#3a2f26","제미나이":"#5f74a8","서하":"#8a5a3b","전체":"#7f6a55","안내":"#a8756a"};
 
   const ST = {today:"", current:"", dates:[], chats:{}, loaded:{}, persona:"seoha", busy:false};
 
@@ -1169,11 +1189,6 @@
   if(!aiCfg.provider) aiCfg.provider = "gemini";
 
   /* ---- helpers ---- */
-  function kstNow(){ return new Date(Date.now() + 9 * 3600000); }
-  function kstDate(){
-    const d = kstNow();
-    return d.getUTCFullYear() + "-" + String(d.getUTCMonth()+1).padStart(2,"0") + "-" + String(d.getUTCDate()).padStart(2,"0");
-  }
   function nowISO(){ return new Date().toISOString(); }
   function fmtTime(iso){
     if(!iso) return "";
@@ -1285,7 +1300,7 @@
       link.href = NOTION_HUB;
       link.textContent = "노션 허브 열기 ↗";
     }
-    $("#chatInput").placeholder = PERSONAS[ST.persona].label + "에게 지시하기";
+    $("#chatInput").placeholder = PERSONAS[ST.persona].call + "에게 지시하기";
     renderChat();
     renderDrawer();
   }
@@ -1336,7 +1351,7 @@
     const log = $("#chatLog");
     const msgs = currentMsgs();
     if(msgs.length === 0){
-      log.innerHTML = '<div class="msg sys"><div class="bubble">@로 비서를 부르면 이 날 대화가 여기에 쌓여요</div></div>';
+      log.innerHTML = '<div class="msg sys"><div class="bubble">아래 칩으로 제미나이·서하를 부르면 이 날 대화가 여기에 쌓여요</div></div>';
     }else{
       let prev = null;
       const html = msgs.map(m=>{
@@ -1402,7 +1417,10 @@
   /* ---- sending ---- */
   function resolveTarget(text){
     const m = text.match(/^@([^\s]+)/);
-    if(m) return ALIASES[m[1].toLowerCase()] || ALIASES[m[1]] || ST.persona;
+    if(m){
+      const key = m[1].replace(/[()]/g, "");
+      return ALIASES[m[1].toLowerCase()] || ALIASES[key] || ALIASES[m[1]] || ST.persona;
+    }
     return ST.persona;
   }
   function threadHistory(target){
@@ -1544,7 +1562,7 @@
   /* ---- name : line parsing / rendering ---- */
   function parseChatLines(raw){
     const out = [];
-    const aliasName = {"대표":"대표님","성민":"대표님","서하(총괄)":"서하","노트(블로그)":"노트","시현(소셜)":"시현","세레나(숏드라마)":"세레나","로블(게임)":"로블"};
+    const aliasName = {"대표":"대표님","성민":"대표님","서하(실무)":"서하","제미나이(팀장)":"제미나이","팀장":"제미나이","실무":"서하"};
     String(raw || "").split(/\r?\n/).forEach(line=>{
       let s = line.replace(/^\s*[-*•]\s*/, "").replace(/^\s*\[\s?\]\s*/, "").trim();
       if(!s) return;
@@ -1570,7 +1588,7 @@
     ST.persona = b.dataset.p;
     renderChips();
     const inp = $("#chatInput");
-    inp.placeholder = PERSONAS[ST.persona].label + "에게 지시하기";
+    inp.placeholder = PERSONAS[ST.persona].call + "에게 지시하기";
     inp.focus();
   });
   $("#chatForm").addEventListener("submit", e=>{
@@ -1677,7 +1695,7 @@
 
   /* ---- boot ---- */
   (async function bootRoom(){
-    ST.today = kstDate();
+    ST.today = kstDateString();
     let idx = await loadIndex();
     idx = (Array.isArray(idx) ? idx : []).map(normalizeEntry).filter(e => e.date);
     if(!idx.some(e => e.date === ST.today)){
@@ -1696,6 +1714,13 @@
   /* ---------------- deep link ---------------- */
   const initial = (location.hash || "").replace("#","");
   if(TAB_IDS[initial]) selectTab(initial);
+
+  /* ---------------- PWA service worker ---------------- */
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", ()=>{
+      navigator.serviceWorker.register("sw.js", {scope:"./"}).catch(()=>{});
+    });
+  }
 })();
 </script>
 </body>
