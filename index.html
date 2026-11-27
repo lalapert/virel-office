@@ -482,18 +482,24 @@
   .dttl{font-size:15px; font-weight:760; letter-spacing:-0.03em;}
   .dclose{margin-left:auto; width:30px;height:30px;border-radius:9px; border:1px solid var(--line); background:var(--paper); font-size:12px; color:var(--ink2);}
   .dsub{margin:5px 0 0; font-size:11px; color:var(--muted);}
-  .datelist{list-style:none; margin:12px -4px 0; padding:0 4px; overflow-y:auto; flex:1;}
-  .datelist li + li{margin-top:3px;}
+  .datelist{list-style:none; margin:14px -4px 0; padding:0 4px; overflow-y:auto; flex:1;}
+  .datelist li + li{margin-top:6px;}
   .ditem{
     width:100%; display:flex; align-items:center; gap:8px; text-align:left;
-    padding:10px 10px; border-radius:13px; color:var(--ink);
+    padding:12px 12px; border-radius:14px; color:var(--ink);
+    border:1px solid transparent; transition:background .16s ease, border-color .16s ease;
   }
   .ditem:active{background:var(--paper2);}
   .ditem[aria-current="true"]{background:var(--paper); box-shadow:var(--shadow); border:1px solid var(--line);}
-  .dday{display:flex; flex-direction:column; gap:1px; min-width:0;}
-  .dday .dd{font-size:13px; font-weight:720; letter-spacing:-0.02em; font-variant-numeric:tabular-nums;}
+  .dday{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .dday .dd{font-size:13.5px; font-weight:720; letter-spacing:-0.02em; font-variant-numeric:tabular-nums;}
   .dday .dl{font-size:10.5px; color:var(--muted);}
   .ditem .dc{margin-left:auto; font-size:11px; color:var(--faint);}
+  .dtip{
+    margin-top:14px; padding:11px 12px; border:1px dashed var(--line); border-radius:13px;
+    background:var(--paper2); font-size:10.8px; color:var(--muted); line-height:1.6;
+  }
+  .dtip b{color:var(--ink2); font-weight:700;}
   .dfoot{margin-top:12px; font-size:10.4px; color:var(--faint); line-height:1.6; border-top:1px solid var(--line); padding-top:10px;}
   body.drawer-open{overflow:hidden;}
 
@@ -733,6 +739,7 @@
   </div>
   <p class="dsub">날짜를 고르면 그날 대화로 바뀌어요.</p>
   <ul class="datelist" id="dateList"></ul>
+  <div class="dtip">새 날짜는 그날 노션 <b>회의실</b> 페이지를 만들고 <b>data/dates.json</b>에 한 줄 넣으면 여기에 나타나요.</div>
   <div class="dfoot">대화는 노션 날짜 페이지와 웹앱이 <b>이름 : 멘트</b> 형식으로 오갑니다.</div>
 </aside>
 
