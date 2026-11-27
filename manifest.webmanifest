@@ -1,0 +1,17 @@
+{
+  "name": "VIREL Office · 서하 비서실",
+  "short_name": "VIREL Office",
+  "description": "VIREL STUDIO 모바일 비서실 대시보드 — 5개 파트 현황과 날짜별 회의실.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f1e8",
+  "theme_color": "#f7f1e8",
+  "lang": "ko",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

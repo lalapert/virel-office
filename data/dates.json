@@ -1,0 +1,16 @@
+{
+  "dates": [
+    {
+      "date": "2026-11-27",
+      "label": "오늘",
+      "notion": "https://app.notion.com/p/2026-11-27-4256c80331b7817d8acedceb0cf2507e",
+      "sample": false
+    },
+    {
+      "date": "2026-11-26",
+      "label": "어제",
+      "notion": null,
+      "sample": true
+    }
+  ]
+}
