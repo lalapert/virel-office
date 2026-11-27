@@ -613,11 +613,11 @@
           <source srcset="assets/office-map.webp" type="image/webp">
           <img src="assets/office-map.jpg" alt="VIREL Office 2인 오피스 — 왼쪽 팀장 제미나이 자리, 오른쪽 실무 서하 자리" width="1400" height="933">
         </picture>
-        <button class="pin" data-member="gemini" style="left:30%;top:17%">
+        <button class="pin" data-member="gemini" style="left:29%;top:15.5%">
           <span class="pill"><span class="d" style="background:#b8c4e6"></span>제미나이</span>
           <span class="sub">설계 · 최종 검수 대기</span>
         </button>
-        <button class="pin" data-member="seoha" style="left:73%;top:27%">
+        <button class="pin" data-member="seoha" style="left:74%;top:25.5%">
           <span class="pill"><span class="d" style="background:#e6b98f"></span>서하</span>
           <span class="sub">비서실 가동 중</span>
         </button>
@@ -805,6 +805,7 @@
     gemini: {
       icon:"✦", name:"제미나이", badge:"팀장",
       owner:"팀장 · 설계와 최종 검수",
+      dsec:"전체 설계도 · 작업 배분 · 최종 검수",
       status:"가동 중", cls:"st-on", color:"#5f74a8",
       label:"설계 · 최종 검수 대기",
       role:"전체 설계도를 쓰고, 작업을 나눠 배분하고, 마지막에 검수해 고칠 곳을 정리합니다.",
@@ -818,6 +819,7 @@
     seoha: {
       icon:"✎", name:"서하", badge:"실무",
       owner:"실무 · 실행과 보고",
+      dsec:"블로그 · X · 노션 · 일상 · 일정",
       status:"가동 중", cls:"st-on", color:"#8a5a3b",
       label:"비서실 가동 중",
       role:"블로그(밑줄노트)·X·노션·일상·일정을 실제로 실행하고 대표님께 보고합니다.",
@@ -1049,7 +1051,7 @@
       '<div class="mhead">' +
         '<span class="mav" style="background:' + m.color + '">' + m.icon + '</span>' +
         '<div class="mwho2"><div class="mnm">' + m.name + '<span class="mbadge">' + m.badge + '</span></div>' +
-          '<div class="mds">' + m.owner + '</div></div>' +
+          '<div class="mds">' + (m.dsec || m.owner) + '</div></div>' +
         '<span class="st ' + m.cls + '">' + m.status + '</span>' +
       '</div>' +
       '<div class="duties">' + duties + '</div>' +
