@@ -1411,7 +1411,12 @@
     const raw = (err && err.message) || "";
     if(s === 401 || s === 403) return "키가 거부됐어요. ⚙︎ 설정에서 " + (aiCfg.provider === "openai" ? "OpenAI" : "Gemini") + " 키를 다시 확인해 주세요.";
     if(s === 429) return "요청 한도에 걸렸어요. 잠시 뒤 다시 보내거나 설정에서 다른 키를 넣어 주세요.";
-    if(s === 400) return "요청이 거부됐어요(400). 모델 이름이나 키 형식을 확인해 주세요." + (raw ? "\n" + raw : "");
+    if(s === 400){
+      if(/api key not valid|invalid api key|incorrect api key|api key expired/i.test(raw)){
+        return "키가 거부됐어요. ⚙︎ 설정에서 " + (aiCfg.provider === "openai" ? "OpenAI" : "Gemini") + " 키를 다시 확인해 주세요.";
+      }
+      return "요청이 거부됐어요(400). 모델 이름이나 키 형식을 확인해 주세요." + (raw ? "\n" + raw : "");
+    }
     if(err && err.name === "AbortError") return "응답이 너무 늦어서 멈췄어요. 다시 보내 주세요.";
     if(err && err.name === "TypeError") return "연결이 막혔어요(네트워크·CORS). 지시는 기록해 두었으니 노션으로 넘겨 주세요.";
     return "응답을 받지 못했어요." + (raw ? "\n" + raw : "");
