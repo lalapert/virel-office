@@ -81,7 +81,12 @@
     content:""; position:absolute; right:-38px; top:-46px; width:130px; height:130px; border-radius:50%;
     background:radial-gradient(circle at 35% 35%, #f2e2cb, rgba(242,226,203,0)); pointer-events:none;
   }
-  .hero h2{margin:0; font-size:18.5px; font-weight:760; letter-spacing:-0.035em; line-height:1.32;}
+  .hero h2{margin:0; font-size:19px; font-weight:770; letter-spacing:-0.04em; line-height:1.3;}
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:6px; margin-bottom:8px;
+    font-size:9px; font-weight:750; letter-spacing:.12em; color:#a8907a;
+  }
+  .eyebrow::before{content:""; width:14px; height:1px; background:#d8c4aa; display:block;}
   .hero .sub{margin:5px 0 0; font-size:12px; color:var(--muted);}
   .chips{display:flex; gap:6px; margin-top:13px; flex-wrap:wrap;}
   .chip{
@@ -109,20 +114,41 @@
   .map-wrap img{width:100%; height:auto;}
   .pin{
     position:absolute; transform:translate(-50%,-50%);
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:0; background:none; border:0;
+    transition:transform .18s ease;
+  }
+  .pin .pill{
     display:inline-flex; align-items:center; gap:5px;
     background:rgba(26,21,17,.9); color:#fdf6ec;
-    font-size:10.5px; font-weight:650; letter-spacing:-0.01em; white-space:nowrap;
-    padding:5px 9px 5px 8px; border-radius:999px;
-    border:1px solid rgba(255,248,235,.18);
-    box-shadow:0 4px 12px -6px rgba(20,15,10,.8);
-    transition:transform .18s ease, background .18s ease, box-shadow .18s ease;
+    font-size:10px; font-weight:680; letter-spacing:-0.01em; white-space:nowrap;
+    padding:4px 8px; border-radius:999px;
+    border:1px solid rgba(255,248,235,.2);
+    box-shadow:0 4px 12px -6px rgba(20,15,10,.85);
+    transition:background .18s ease, color .18s ease, box-shadow .18s ease;
   }
-  .pin .d{width:6px;height:6px;border-radius:50%; flex:none; box-shadow:0 0 0 2px rgba(255,255,255,.08);}
+  .pin .d{width:5px;height:5px;border-radius:50%; flex:none;}
+  .pin .sub{
+    font-size:8.5px; font-weight:650; letter-spacing:-0.02em; white-space:nowrap;
+    color:#5b4a38; background:rgba(255,251,244,.94);
+    border:1px solid rgba(214,194,168,.85);
+    padding:2px 6px; border-radius:7px;
+    box-shadow:0 2px 6px -3px rgba(60,40,20,.55);
+    backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+    transition:background .18s ease, color .18s ease, border-color .18s ease;
+  }
+  @keyframes pinIn{from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:none}}
+  .pin .pill, .pin .sub{animation:pinIn .5s cubic-bezier(.22,.9,.3,1) both;}
+  .pin:nth-of-type(2) .pill, .pin:nth-of-type(2) .sub{animation-delay:.06s}
+  .pin:nth-of-type(3) .pill, .pin:nth-of-type(3) .sub{animation-delay:.12s}
+  .pin:nth-of-type(4) .pill, .pin:nth-of-type(4) .sub{animation-delay:.18s}
+  .pin:nth-of-type(5) .pill, .pin:nth-of-type(5) .sub{animation-delay:.24s}
   .pin:active{transform:translate(-50%,-50%) scale(.95);}
-  .pin.on{
+  .pin.on .pill{
     background:#fdf6ec; color:#241d17; border-color:#241d17;
-    box-shadow:0 0 0 2.5px rgba(36,29,23,.16), 0 8px 18px -8px rgba(20,15,10,.7);
+    box-shadow:0 0 0 2.5px rgba(36,29,23,.14), 0 8px 18px -10px rgba(20,15,10,.8);
   }
+  .pin.on .sub{background:#241d17; color:#fdf6ec; border-color:#241d17;}
   .map-hint{
     display:flex; align-items:center; gap:6px; justify-content:center;
     padding:8px 4px 3px; font-size:10.5px; color:var(--faint); letter-spacing:-0.01em;
@@ -352,6 +378,35 @@
   .qlist{display:flex; gap:6px; flex-wrap:wrap; margin-top:9px;}
   .q{font-size:11px; color:var(--ink2); background:var(--paper2); border:1px solid var(--line); border-radius:999px; padding:6px 9px;}
 
+  /* ---------- polish: chat ---------- */
+  .chatlog{gap:9px; padding:4px 6px 10px 4px;}
+  .daysplit{display:flex; justify-content:center; margin:2px 0 4px;}
+  .daysplit span{
+    font-size:9.5px; font-weight:700; letter-spacing:-0.01em; color:#9d8b77;
+    background:rgba(255,250,243,.85); border:1px solid var(--line2);
+    padding:4px 10px; border-radius:999px;
+  }
+  .bubble{padding:11px 13px; border-radius:16px; font-size:13px; line-height:1.62;}
+  .msg.me .bubble{
+    background:linear-gradient(180deg,#2b231c,#1f1a16);
+    box-shadow:0 6px 16px -12px rgba(31,26,22,.9);
+  }
+  .msg.ai .bubble{
+    background:var(--paper); border-color:#efe4d4;
+    box-shadow:0 1px 2px rgba(61,44,30,.04), 0 8px 20px -18px rgba(61,44,30,.6);
+  }
+  .av{width:26px; height:26px; font-size:10.5px;
+    box-shadow:0 0 0 2px var(--paper), 0 2px 6px -3px rgba(40,28,16,.5);}
+  .mwho{font-size:10px; letter-spacing:-0.01em;}
+  .mwho .t{font-size:9.5px;}
+  .msg.cont .av{visibility:hidden; height:0; margin:0;}
+  .msg.cont .mwho{display:none;}
+  .msg.cont .bubble{border-top-left-radius:6px;}
+  .msg.me.cont .bubble{border-top-right-radius:6px;}
+  .msg + .msg.cont{margin-top:-4px;}
+  .composer input{border-radius:999px; padding:12px 16px;}
+  .send{width:42px; height:42px; border-radius:50%; box-shadow:0 8px 18px -12px rgba(31,26,22,.9);}
+
   /* ---------- sheet (settings) ---------- */
   .sheet{position:fixed; inset:0; z-index:60; background:rgba(28,22,16,.42); display:flex; align-items:flex-end; justify-content:center;}
   .sheet-in{
@@ -517,6 +572,7 @@
   <!-- ================= 오피스 ================= -->
   <section id="tab-office" role="tabpanel">
     <div class="hero">
+      <span class="eyebrow">VIREL STUDIO · 비서실</span>
       <h2>대표님, 5개 파트가 대기 중이에요</h2>
       <p class="sub" id="todayline">오늘도 조용히 굴러가고 있어요</p>
       <div class="chips">
@@ -534,11 +590,11 @@
           <source srcset="assets/office-map.webp" type="image/webp">
           <img src="assets/office-map.jpg" alt="VIREL Office 3D 아이소메트릭 오피스맵 — 지휘실, 콘텐츠실, 소셜실, 스튜디오실, 라운지" width="1400" height="933">
         </picture>
-        <button class="pin" data-part="hq"    style="left:17%;top:36%"><span class="d" style="background:#d8c3a5"></span>지휘실</button>
-        <button class="pin" data-part="blog"  style="left:49%;top:23%"><span class="d" style="background:#a7c08f"></span>밑줄노트</button>
-        <button class="pin" data-part="social" style="left:33%;top:68%"><span class="d" style="background:#e0a381"></span>X 소셜</button>
-        <button class="pin" data-part="drama" style="left:66%;top:78%"><span class="d" style="background:#bda9d6"></span>숏드라마</button>
-        <button class="pin" data-part="roblox" style="left:79%;top:45%"><span class="d" style="background:#93b6bd"></span>로블록스</button>
+        <button class="pin" data-part="hq"    style="left:17%;top:33%"><span class="pill"><span class="d" style="background:#d8c3a5"></span>지휘실</span><span class="sub">비서실 구축 중</span></button>
+        <button class="pin" data-part="blog"  style="left:49%;top:20%"><span class="pill"><span class="d" style="background:#a7c08f"></span>밑줄노트</span><span class="sub">내일 09시 글 대기</span></button>
+        <button class="pin" data-part="social" style="left:32%;top:65%"><span class="pill"><span class="d" style="background:#e0a381"></span>X 소셜</span><span class="sub">X 재개 대기</span></button>
+        <button class="pin" data-part="drama" style="left:64%;top:74%"><span class="pill"><span class="d" style="background:#bda9d6"></span>숏드라마</span><span class="sub">시안 3종 대기</span></button>
+        <button class="pin" data-part="roblox" style="left:80%;top:42%"><span class="pill"><span class="d" style="background:#93b6bd"></span>로블록스</span><span class="sub">흉가 청소반</span></button>
       </div>
       <div class="map-hint"><b>마커</b>를 눌러 파트 상세를 열 수 있어요</div>
     </div>
@@ -1252,18 +1308,18 @@
   }
 
   /* ---- chat render ---- */
-  function renderOne(m){
+  function renderOne(m, cont){
     if(m.kind === "system"){
       return '<div class="msg sys"><div class="bubble">' + escapeHtml(m.text) + '</div></div>';
     }
     if(m.name === "대표님"){
-      return '<div class="msg me">' +
+      return '<div class="msg me' + (cont ? " cont" : "") + '">' +
         '<div class="mwho" style="justify-content:flex-end">대표님 <span class="t">' + fmtTime(m.at) + '</span></div>' +
         '<div class="bubble">' + escapeHtml(m.text) + '</div></div>';
     }
     const c = colorFor(m.name);
     const tag = (m.sample ? ' · 샘플' : '');
-    return '<div class="msg ai' + (m.kind === "error" ? " err" : "") + '">' +
+    return '<div class="msg ai' + (m.kind === "error" ? " err" : "") + (cont ? " cont" : "") + '">' +
       '<div class="row">' +
         '<div class="av" style="background:' + c + '">' + escapeHtml(initialOf(m.name)) + '</div>' +
         '<div class="mbody">' +
@@ -1278,7 +1334,14 @@
     if(msgs.length === 0){
       log.innerHTML = '<div class="msg sys"><div class="bubble">@로 비서를 부르면 이 날 대화가 여기에 쌓여요</div></div>';
     }else{
-      log.innerHTML = msgs.map(renderOne).join("");
+      let prev = null;
+      const html = msgs.map(m=>{
+        const cont = !!(prev && prev.name === m.name && m.kind !== "system" && prev.kind !== "system");
+        prev = m;
+        return renderOne(m, cont);
+      }).join("");
+      const day = '<div class="daysplit"><span>' + ST.current + (ST.current === ST.today ? ' · 오늘' : '') + '</span></div>';
+      log.innerHTML = day + html;
     }
     log.scrollTop = log.scrollHeight;
     renderPending();
