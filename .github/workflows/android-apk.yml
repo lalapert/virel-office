@@ -1,0 +1,48 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "assets/**"
+      - "data/**"
+      - "android/**"
+      - ".github/workflows/android-apk.yml"
+  pull_request:
+    paths:
+      - "index.html"
+      - "assets/**"
+      - "data/**"
+      - "android/**"
+      - ".github/workflows/android-apk.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK and run unit tests
+        working-directory: android
+        env:
+          # 실행할 때마다 버전 코드를 올려서 폰에 덮어 설치(업데이트)가 되게 한다
+          VERSION_CODE: ${{ github.run_number }}
+        run: ./gradlew --no-daemon assembleRelease testReleaseUnitTest
+
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk VIREL-Office.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VIREL-Office-apk
+          path: VIREL-Office.apk
+          retention-days: 30
