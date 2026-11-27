@@ -52,6 +52,36 @@ data/chat-YYYY-MM-DD.json    그날 대화
 - `manifest.webmanifest` — `id`·`start_url`·`scope` 모두 `./`, `display: standalone`, 아이콘 192/512 + maskable 512.
 - 화면 이동은 네트워크 우선(항상 최신), `data/*.json`도 네트워크 우선, 이미지는 캐시 우선 후 갱신입니다. 앱 내용을 바꾸면 `sw.js`의 `VERSION`을 올리면 이전 캐시가 지워집니다.
 
+## 안드로이드 앱 (APK) — 노션 실시간 양방향 연동
+
+`android/` 폴더는 이 웹 UI(`index.html`)를 그대로 담은 Kotlin WebView 앱입니다. 빌드할 때 루트의 `index.html` · `assets/` · `data/`를 앱 안으로 복사하므로 화면은 웹판과 같은 파일 하나로 관리합니다.
+
+| 기능 | 동작 |
+| --- | --- |
+| ☰ 날짜 드로어 | 노션 허브 하위 `YYYY-MM-DD 회의실` 페이지 목록을 직접 읽음 |
+| 회의실 말풍선 | 날짜 페이지 블록의 `이름 : 멘트` 줄을 파싱. 회의실 탭이 보일 때 10초마다 다시 읽음(앱이 뒤로 가면 멈춤) |
+| 메시지 전송 | `대표님 : 내용` 문단 블록을 대화 마지막 줄 바로 뒤에 추가. 오늘 페이지가 없으면 허브 아래에 자동 생성 |
+| AI 키가 있을 때 | 비서 답장도 `서하 : …` / `제미나이 : …`로 노션에 같이 기록 |
+| 전송 실패 | 이 기기에 보관했다가 `노션에 다시 보내기`로 재전송 |
+| 오피스 마커 | 오늘 노션에서 제미나이·서하가 마지막으로 한 말을 마커 말풍선에 표시 |
+
+- 노션 호출은 앱의 네이티브 HTTP(OkHttp)가 `api.notion.com`으로 직접 보냅니다(CORS 없음). 허용 경로는 `/v1/blocks` · `/v1/pages` · `/v1/users`뿐입니다.
+- **토큰(`ntn_…`)은 앱 ⚙︎ 설정 → `토큰 입력`**에서 넣습니다. Android Keystore(AES-256-GCM)로 암호화해 저장하고, 웹 화면(JS)에는 넘기지 않습니다. 저장소에는 절대 커밋하지 않습니다.
+- 파싱 규칙: 한 블록의 첫 줄은 어떤 이름이든 말풍선이 되고, 둘째 줄부터는 `대표님` `제미나이` `서하`로 시작할 때만 새 말풍선이 됩니다(`결론: …` 같은 줄은 앞 말풍선에 이어 붙음).
+- 웹판(GitHub Pages)은 지금처럼 JSON 동기화 방식으로 동작합니다.
+
+### 빌드
+
+```bash
+cd android
+echo "sdk.dir=/path/to/android-sdk" > local.properties   # Android Studio면 자동
+./gradlew assembleRelease            # → app/build/outputs/apk/release/app-release.apk
+./gradlew testReleaseUnitTest -Dnotion.live=1   # 실제 노션 읽기 테스트 포함(NOTION_TOKEN 환경변수)
+```
+
+- `main`에 푸시하면 GitHub Actions(`Android APK`)가 APK를 만들어 실행 결과의 Artifacts(`VIREL-Office-apk`)에 올립니다.
+- 서명 키 `android/keystore/virel-shared.keystore`는 로컬 빌드와 Actions 빌드를 같은 서명으로 맞춰 덮어 설치가 되게 하는 **개인 설치용 공용 키**입니다. 공개 저장소에 있으므로 Play 스토어 배포용으로 쓰지 마세요.
+
 ## 응답 모드
 
 - **실시간 응답**: 회의실 ⚙︎ 설정에서 Gemini 또는 OpenAI 키를 넣으면 비서가 바로 답합니다. 키는 그 브라우저의 `localStorage`에만 저장되고 이 저장소에는 들어가지 않습니다.

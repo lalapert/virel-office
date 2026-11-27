@@ -324,6 +324,9 @@
   .modechip::before{content:""; width:5px;height:5px;border-radius:50%; background:#b7a794;}
   .modechip.live{color:#4a7a51; background:#e8f0e4; border-color:#d6e4d0;}
   .modechip.live::before{background:#4e9b5c;}
+  .modechip.err{color:#a24a3a; background:#f6e6e1; border-color:#ecd2ca;}
+  .modechip.err::before{background:#c0624e;}
+  .msg .bubble.fail{outline:1.5px dashed #c0624e; outline-offset:2px;}
   .gear{
     flex:none; width:28px;height:28px;border-radius:9px;border:1px solid var(--line); background:var(--paper);
     display:flex;align-items:center;justify-content:center; font-size:13px; color:var(--ink2);
@@ -768,6 +771,16 @@
     <h3 id="sheetTitle">응답 모드 설정</h3>
     <p class="sub">키를 넣으면 회의실에서 비서가 바로 답해요. 넣지 않으면 지시를 기록해 두고 노션 허브로 넘길 수 있어요.</p>
 
+    <div class="field" id="notionField" hidden>
+      <label>노션 실시간 연동 (안드로이드 앱)</label>
+      <div class="notice" id="notionStatus">확인 중…</div>
+      <div class="btnrow" style="margin-top:8px">
+        <button class="btn" type="button" id="notionToken">토큰 입력</button>
+        <button class="btn" type="button" id="notionTest">연결 테스트</button>
+      </div>
+      <button class="btn" type="button" id="notionClear" style="margin-top:6px;border-style:dashed;color:var(--muted);font-weight:600;font-size:12px;width:100%">노션 토큰 삭제</button>
+    </div>
+
     <div class="field">
       <label>AI 제공자</label>
       <div class="seg" id="providerSeg">
@@ -806,6 +819,9 @@
 <script>
 (function(){
   "use strict";
+
+  /* 안드로이드 앱(VIREL Office APK) 안에서만 존재하는 네이티브 다리. 웹판에서는 null. */
+  const NATIVE = (typeof window.VirelNative === "object" && window.VirelNative) ? window.VirelNative : null;
 
   /* ---------------- data ---------------- */
   const MEMBERS = {
@@ -1135,6 +1151,9 @@
 
   /* ---------------- backup ---------------- */
   function download(name, text){
+    if(NATIVE){
+      try{ NATIVE.saveFile(name, text); return; }catch(e){}
+    }
     const blob = new Blob([text], {type:"application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1245,6 +1264,7 @@
   }
 
   async function loadChat(date){
+    if(NT.on) return nLoadChat(date);
     if(ST.loaded[date]) return ST.chats[date];
     let base = [];
     try{
@@ -1278,7 +1298,10 @@
       const bits = [];
       if(e.date === ST.today) bits.push("오늘");
       else if(e.label) bits.push(e.label);
-      bits.push(msgs.length ? msgs.length + "개 대화" : "기록 없음");
+      if(msgs.length) bits.push(msgs.length + "개 대화");
+      else if(NT.on && e.pageId && !ST.loaded[e.date]) bits.push("노션 페이지");
+      else if(NT.on && !e.pageId) bits.push("첫 메시지 때 노션 페이지 생성");
+      else bits.push("기록 없음");
       if(e.sample) bits.push("샘플");
       return '<li><button class="ditem" data-date="' + e.date + '" aria-current="' + (e.date === ST.current ? "true" : "false") + '">' +
         '<span class="dday"><span class="dd">' + e.date + '</span><span class="dl">' + bits.join(" · ") + '</span></span>' +
@@ -1287,6 +1310,7 @@
     }).join("");
   }
   function openDrawer(){
+    if(NT.on) nRefreshDates(false).then(renderDrawer).catch(()=>{});
     $("#drawer").classList.add("open");
     $("#drawerBg").classList.add("open");
     $("#drawer").setAttribute("aria-hidden","false");
@@ -1305,6 +1329,13 @@
     await loadChat(date);
     const entry = ST.dates.find(e => e.date === date);
     $("#roomDateLabel").textContent = date + (date === ST.today ? " · 오늘" : "");
+    updateDateLink(entry);
+    $("#chatInput").placeholder = PERSONAS[ST.persona].call + "에게 지시하기";
+    renderChat();
+    renderDrawer();
+    nUpdatePins();
+  }
+  function updateDateLink(entry){
     const link = $("#datePageLink");
     if(entry && entry.notion){
       link.href = entry.notion;
@@ -1313,9 +1344,6 @@
       link.href = NOTION_HUB;
       link.textContent = "노션 허브 열기 ↗";
     }
-    $("#chatInput").placeholder = PERSONAS[ST.persona].call + "에게 지시하기";
-    renderChat();
-    renderDrawer();
   }
 
   /* ---- chips ---- */
@@ -1330,6 +1358,22 @@
   /* ---- mode chip ---- */
   function renderMode(){
     const chip = $("#modeChip");
+    const prov = aiCfg.provider === "openai" ? "OpenAI" : "Gemini";
+    if(NT.on){
+      if(NT.err){
+        chip.className = "modechip err";
+        chip.textContent = "노션 연결 확인 필요";
+      }else{
+        chip.className = "modechip live";
+        chip.textContent = "노션 실시간" + (hasKey() ? " · " + prov : "");
+      }
+      return;
+    }
+    if(NATIVE && !hasKey()){
+      chip.className = "modechip";
+      chip.textContent = "노션 미연결 · ⚙︎에서 토큰 입력";
+      return;
+    }
     if(hasKey()){
       chip.className = "modechip live";
       chip.textContent = "실시간 응답 · " + (aiCfg.provider === "openai" ? "OpenAI" : "Gemini");
@@ -1344,24 +1388,28 @@
     if(m.kind === "system"){
       return '<div class="msg sys"><div class="bubble">' + escapeHtml(m.text) + '</div></div>';
     }
+    const state = m.sending ? ' · 보내는 중' : (m.failed ? ' · 전송 실패' : '');
+    const bcls = m.failed ? ' fail' : '';
     if(m.name === "대표님"){
       return '<div class="msg me' + (cont ? " cont" : "") + '">' +
-        '<div class="mwho" style="justify-content:flex-end">대표님 <span class="t">' + fmtTime(m.at) + '</span></div>' +
-        '<div class="bubble">' + escapeHtml(m.text) + '</div></div>';
+        '<div class="mwho" style="justify-content:flex-end">대표님 <span class="t">' + fmtTime(m.at) + state + '</span></div>' +
+        '<div class="bubble' + bcls + '">' + escapeHtml(m.text) + '</div></div>';
     }
     const c = colorFor(m.name);
-    const tag = (m.sample ? ' · 샘플' : '');
+    const tag = (m.sample ? ' · 샘플' : '') + state;
     return '<div class="msg ai' + (m.kind === "error" ? " err" : "") + (cont ? " cont" : "") + '">' +
       '<div class="row">' +
         '<div class="av" style="background:' + c + '">' + escapeHtml(initialOf(m.name)) + '</div>' +
         '<div class="mbody">' +
           '<div class="mwho">' + escapeHtml(m.name) + ' <span class="t">' + fmtTime(m.at) + tag + '</span></div>' +
-          '<div class="bubble">' + escapeHtml(m.text) + '</div>' +
+          '<div class="bubble' + bcls + '">' + escapeHtml(m.text) + '</div>' +
         '</div>' +
       '</div></div>';
   }
-  function renderChat(){
+  function renderChat(keepScroll){
     const log = $("#chatLog");
+    const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 80;
+    const prevTop = log.scrollTop;
     const msgs = currentMsgs();
     if(msgs.length === 0){
       log.innerHTML = '<div class="msg sys"><div class="bubble">아래 칩으로 제미나이·서하를 부르면 이 날 대화가 여기에 쌓여요</div></div>';
@@ -1375,7 +1423,8 @@
       const day = '<div class="daysplit"><span>' + ST.current + (ST.current === ST.today ? ' · 오늘' : '') + '</span></div>';
       log.innerHTML = day + html;
     }
-    log.scrollTop = log.scrollHeight;
+    // 폴링으로 새로 그릴 때는 대표님이 위로 올려 읽던 위치를 지킨다
+    log.scrollTop = (keepScroll && !nearBottom) ? prevTop : log.scrollHeight;
     renderPending();
   }
 
@@ -1383,6 +1432,7 @@
   function pendingItems(){ return currentMsgs().filter(m => m.pending); }
   function renderPending(){
     const box = $("#pendingBox");
+    if(NT.on){ nRenderOutbox(box); return; }
     const items = pendingItems();
     if(items.length === 0){ box.hidden = true; box.innerHTML = ""; return; }
     const last = items.slice(-3).map(m => "· " + escapeHtml(shorten(m.text, 42)));
@@ -1414,6 +1464,9 @@
 
   /* ---- clipboard ---- */
   async function copyText(text){
+    if(NATIVE){
+      try{ if(NATIVE.copy(text)) return true; }catch(e){}
+    }
     try{
       if(navigator.clipboard && window.isSecureContext){
         await navigator.clipboard.writeText(text);
@@ -1504,6 +1557,14 @@
     return outText.trim();
   }
 
+  async function askAI(target, hist, text){
+    const model = (aiCfg.model || "").trim() || MODELS[aiCfg.provider] || MODELS.gemini;
+    const sys = systemFor(target);
+    return aiCfg.provider === "openai"
+      ? await callOpenAI(model, sys, hist, text)
+      : await callGemini(model, sys, hist, text);
+  }
+
   function explainError(err){
     const s = err && err.status;
     const raw = (err && err.message) || "";
@@ -1535,6 +1596,7 @@
   async function sendText(raw){
     const text = String(raw || "").trim();
     if(!text || ST.busy) return;
+    if(NT.on) return nSend(text);
     const target = resolveTarget(text);
     const hist = hasKey() ? threadHistory(target) : [];
     currentMsgs().push({name:"대표님", text:text, at: nowISO(), to: target, pending: false});
@@ -1552,11 +1614,7 @@
     if(sendBtn) sendBtn.disabled = true;
     addTyping();
     try{
-      const model = (aiCfg.model || "").trim() || MODELS[aiCfg.provider] || MODELS.gemini;
-      const sys = systemFor(target);
-      const reply = aiCfg.provider === "openai"
-        ? await callOpenAI(model, sys, hist, text)
-        : await callGemini(model, sys, hist, text);
+      const reply = await askAI(target, hist, text);
       removeTyping();
       currentMsgs().push({name: PERSONAS[target].name, text: reply, at: nowISO(), to: target, role:"assistant"});
       persist(); renderChat();
@@ -1593,6 +1651,474 @@
   function toLines(msgs){
     return msgs.map(m => m.name + " : " + String(m.text).replace(/\r?\n/g, " ")).join("\n");
   }
+
+  /* ================= 노션 실시간 양방향 연동 (안드로이드 앱 전용) =================
+     앱의 네이티브 HTTP(OkHttp)가 api.notion.com을 직접 부르므로 CORS 제약이 없다.
+     토큰은 네이티브 Keystore에만 있고 이 페이지(JS)는 토큰 값을 모른다.
+     - 허브 하위 "YYYY-MM-DD 회의실" 페이지 → ☰ 날짜 드로어
+     - 날짜 페이지 블록의 "이름 : 멘트" 줄 → 말풍선 (회의실이 보일 때 10초마다 다시 읽음)
+     - 앱에서 보낸 말 → "대표님 : 내용" 문단 블록을 대화 마지막 줄 뒤에 추가 (오늘 페이지가 없으면 생성) */
+  const NOTION_HUB_ID = "4256c803-31b7-81c6-991c-e92ec8b3e15a";
+  const POLL_MS = 10000;
+  const OUTBOX_PREFIX = "virel-office:v3:outbox:";
+  const NCACHE_PREFIX = "virel-office:v3:notion:";
+  const DATE_TITLE = /^(\d{4}-\d{2}-\d{2})\s*회의실/;
+  const TEXT_TYPES = {paragraph:1, bulleted_list_item:1, numbered_list_item:1, quote:1, to_do:1};
+  const NAME_ALIAS = {"대표":"대표님","성민":"대표님","서하(실무)":"서하","제미나이(팀장)":"제미나이","팀장":"제미나이","실무":"서하"};
+  const KNOWN_NAMES = new Set(["대표님","제미나이","서하"].concat(Object.keys(NAME_ALIAS)));
+
+  const NT = {
+    on:false, err:null, msgs:{}, extra:{}, sig:{}, anchor:{}, pages:{},
+    creating:{}, polling:false, timer:null, datesAt:0, backoffUntil:0, lastOk:0
+  };
+
+  /* ---- 네이티브 다리: Promise로 감싼 노션 호출 ---- */
+  const nBridge = (function(){
+    if(!NATIVE) return null;
+    let seq = 0;
+    const waits = {};
+    window.__virelNative = window.__virelNative || {};
+    window.__virelNative.resolve = function(id, status, text){
+      const w = waits[id];
+      if(!w) return;
+      delete waits[id];
+      w(status, text);
+    };
+    return function(method, path, body){
+      return new Promise((resolve, reject)=>{
+        const id = "n" + (++seq);
+        const timer = setTimeout(()=>{
+          delete waits[id];
+          const e = new Error("노션 응답이 늦어요"); e.status = 0; reject(e);
+        }, 35000);
+        waits[id] = (status, text)=>{
+          clearTimeout(timer);
+          let data = null;
+          try{ data = text ? JSON.parse(text) : null; }catch(e){}
+          if(status >= 200 && status < 300){ resolve(data); return; }
+          const e = new Error((data && data.message) || ("HTTP " + status));
+          e.status = status; e.code = data && data.code;
+          reject(e);
+        };
+        try{ NATIVE.notion(id, method, path, body ? JSON.stringify(body) : ""); }
+        catch(err){ clearTimeout(timer); delete waits[id]; reject(err); }
+      });
+    };
+  })();
+  function nativeHasToken(){
+    try{ return !!(NATIVE && nBridge && NATIVE.hasToken()); }catch(e){ return false; }
+  }
+
+  function nExplain(err){
+    const s = err && err.status;
+    if(s === 0) return "노션에 연결할 수 없어요. 인터넷 연결을 확인해 주세요.";
+    if(s === 401) return "노션 토큰이 거부됐어요. ⚙︎ 설정에서 토큰을 다시 넣어 주세요.";
+    if(s === 403) return "통합 권한이 부족해요. 노션 통합의 읽기·업데이트·삽입 권한을 확인해 주세요.";
+    if(s === 404) return "허브 페이지를 찾지 못했어요. 허브 ··· → 연결(Connections)에 VIREL Office가 있는지 확인해 주세요.";
+    if(s === 429) return "노션 요청이 몰렸어요. 잠시 뒤 다시 읽어요.";
+    return "노션 오류" + (s ? " (" + s + ")" : "") + (err && err.message ? " · " + err.message : "");
+  }
+  function nFail(err){
+    NT.err = err;
+    if(err && err.status === 429) NT.backoffUntil = Date.now() + 30000;
+    renderMode();
+    renderNotionStatus();
+  }
+  function nOk(){
+    const had = !!NT.err;
+    NT.err = null; NT.lastOk = Date.now();
+    if(had){ renderMode(); renderNotionStatus(); }
+  }
+
+  /* ---- 노션 읽기 ---- */
+  function plain(rt){ return (rt || []).map(x => x.plain_text || "").join(""); }
+  function pageUrl(id){ return "https://app.notion.com/p/" + String(id).replace(/-/g, ""); }
+
+  async function nChildren(blockId){
+    let out = [], cursor = null, guard = 0;
+    do{
+      const q = "?page_size=100" + (cursor ? "&start_cursor=" + encodeURIComponent(cursor) : "");
+      const d = await nBridge("GET", "/v1/blocks/" + blockId + "/children" + q);
+      out = out.concat((d && d.results) || []);
+      cursor = d && d.has_more ? d.next_cursor : null;
+    }while(cursor && ++guard < 30);
+    return out;
+  }
+
+  async function nListDates(){
+    const blocks = await nChildren(NOTION_HUB_ID);
+    const out = [];
+    blocks.forEach(b=>{
+      if(b.type !== "child_page") return;
+      const m = String((b.child_page && b.child_page.title) || "").trim().match(DATE_TITLE);
+      if(m && !out.some(x => x.date === m[1])) out.push({date:m[1], pageId:b.id});
+    });
+    return out;
+  }
+
+  /* 한 블록 안의 여러 줄을 말풍선으로. 블록 첫 줄은 어떤 이름이든 받고,
+     둘째 줄부터는 아는 이름(대표님·제미나이·서하)일 때만 새 말풍선 — "결론: …" 같은 줄이 사람으로 갈라지지 않게. */
+  function parseBlockText(raw){
+    const out = [];
+    String(raw || "").split(/\r?\n/).forEach(line=>{
+      const s = line.replace(/^\s*[-*•]\s*/, "").trim();
+      if(!s) return;
+      const m = s.match(/^@?([^\s:：]{1,12})\s*[:：]\s*(.+)$/);
+      const nm = m ? m[1].replace(/^@/, "") : "";
+      if(m && (out.length === 0 || KNOWN_NAMES.has(nm))){
+        out.push({name: NAME_ALIAS[nm] || nm, text: m[2].trim()});
+      }else if(out.length){
+        out[out.length - 1].text += "\n" + s;
+      }
+    });
+    return out;
+  }
+
+  async function nReadPage(pageId){
+    const blocks = await nChildren(pageId);
+    const msgs = [];
+    let anchor = null, heading = null;
+    blocks.forEach(b=>{
+      const t = b.type;
+      if(t === "heading_1" || t === "heading_2" || t === "heading_3"){
+        if(!heading && /대화/.test(plain(b[t].rich_text))) heading = b.id;
+        return;
+      }
+      if(!TEXT_TYPES[t]) return;
+      const parsed = parseBlockText(plain(b[t].rich_text));
+      if(!parsed.length) return;
+      parsed.forEach((p, i)=> msgs.push({name:p.name, text:p.text, at:b.created_time, nid:b.id + ":" + i}));
+      anchor = b.id;
+    });
+    return {msgs: msgs, anchor: anchor || heading || null};
+  }
+
+  /* ---- 화면 상태 ---- */
+  function nExtra(date){
+    if(!NT.extra[date]){
+      const saved = load(OUTBOX_PREFIX + date, []);
+      NT.extra[date] = (Array.isArray(saved) ? saved : []).map(m => Object.assign({}, m, {failed:true, sending:false}));
+    }
+    return NT.extra[date];
+  }
+  function nSaveOutbox(date){
+    save(OUTBOX_PREFIX + date, nExtra(date).filter(m => m.failed)
+      .map(m => ({name:m.name, text:m.text, at:m.at, oid:m.oid})));
+  }
+  function nRebuild(date){
+    ST.chats[date] = (NT.msgs[date] || []).concat(nExtra(date));
+  }
+  function nApply(date, r){
+    NT.anchor[date] = r.anchor;
+    NT.msgs[date] = r.msgs;
+    const sig = r.msgs.map(m => m.nid + "|" + m.text).join("\n");
+    const changed = sig !== NT.sig[date];
+    NT.sig[date] = sig;
+    nRebuild(date);
+    ST.loaded[date] = true;
+    save(NCACHE_PREFIX + date, r.msgs);
+    return changed;
+  }
+
+  async function nLoadChat(date){
+    const pid = NT.pages[date];
+    if(!pid){
+      NT.msgs[date] = NT.msgs[date] || [];
+      nRebuild(date); ST.loaded[date] = true;
+      return ST.chats[date];
+    }
+    try{
+      nApply(date, await nReadPage(pid));
+      nOk();
+    }catch(err){
+      nFail(err);
+      if(!NT.msgs[date]){
+        const cached = load(NCACHE_PREFIX + date, []);
+        NT.msgs[date] = Array.isArray(cached) ? cached : [];
+      }
+      nRebuild(date); ST.loaded[date] = true;
+    }
+    return ST.chats[date];
+  }
+
+  function nMergeDates(list){
+    const map = {};
+    ST.dates.forEach(e => { map[e.date] = e; e.pageId = null; e.notion = null; });
+    NT.pages = {};
+    list.forEach(x=>{
+      NT.pages[x.date] = x.pageId;
+      const e = map[x.date] || (map[x.date] = {date:x.date, label:"", sample:false});
+      e.pageId = x.pageId;
+      e.notion = pageUrl(x.pageId);
+    });
+    if(!map[ST.today]) map[ST.today] = {date:ST.today, label:"오늘", notion:null, sample:false, pageId:null};
+    ST.dates = Object.keys(map).map(k => map[k])
+      .filter(e => e.pageId || e.date === ST.today)
+      .sort((a,b)=> b.date.localeCompare(a.date));
+    save(NCACHE_PREFIX + "dates", list);
+  }
+
+  async function nRefreshDates(force){
+    if(!force && Date.now() - NT.datesAt < 15000) return;
+    NT.datesAt = Date.now();
+    try{
+      nMergeDates(await nListDates());
+      nOk();
+    }catch(err){
+      nFail(err);
+      throw err;
+    }
+  }
+
+  /* ---- 노션 쓰기 ---- */
+  function richText(s){
+    const out = [];
+    for(let i = 0; i < s.length; i += 1900) out.push({type:"text", text:{content: s.slice(i, i + 1900)}});
+    return out.length ? out : [{type:"text", text:{content:""}}];
+  }
+
+  async function nEnsurePage(date){
+    if(NT.pages[date]) return NT.pages[date];
+    if(NT.creating[date]) return NT.creating[date];
+    NT.creating[date] = (async ()=>{
+      // 다른 AI나 기기가 먼저 만들었을 수 있으니 한 번 더 확인
+      await nRefreshDates(true);
+      if(NT.pages[date]) return NT.pages[date];
+      const rt = s => [{type:"text", text:{content:s}}];
+      const bullet = s => ({object:"block", type:"bulleted_list_item", bulleted_list_item:{rich_text: rt(s)}});
+      const d = await nBridge("POST", "/v1/pages", {
+        parent: {page_id: NOTION_HUB_ID},
+        properties: {title: {title: rt(date + " 회의실")}},
+        children: [
+          {object:"block", type:"callout", callout:{rich_text: rt("오늘의 회의실 기록입니다. 한 줄에 이름 : 멘트 형식으로 적으면 VIREL Office 앱 회의실에 말풍선으로 나타납니다.")}},
+          {object:"block", type:"heading_2", heading_2:{rich_text: rt("대화")}},
+          {object:"block", type:"heading_2", heading_2:{rich_text: rt("작성 규칙")}},
+          bullet("한 줄에 한 마디씩 이름 : 멘트 형식으로 적습니다."),
+          bullet("이름은 대표님 · 제미나이 · 서하를 씁니다."),
+          bullet("앱에서 보낸 말은 대화 마지막 줄 뒤에 자동으로 추가됩니다.")
+        ]
+      });
+      NT.pages[date] = d.id;
+      NT.anchor[date] = undefined;
+      const entry = ST.dates.find(e => e.date === date);
+      if(entry){ entry.pageId = d.id; entry.notion = d.url || pageUrl(d.id); }
+      if(date === ST.current) updateDateLink(entry);
+      toast(date + " 회의실 페이지를 노션에 만들었어요");
+      return d.id;
+    })();
+    try{ return await NT.creating[date]; }
+    finally{ delete NT.creating[date]; }
+  }
+
+  async function nWrite(date, items){
+    const pid = await nEnsurePage(date);
+    if(NT.anchor[date] === undefined) nApply(date, await nReadPage(pid));
+    const lines = items.map(it => it.name + " : " + String(it.text).trim());
+    const children = lines.map(s => ({object:"block", type:"paragraph", paragraph:{rich_text: richText(s)}}));
+    async function attempt(withAnchor){
+      const body = {children: children};
+      if(withAnchor && NT.anchor[date]) body.after = NT.anchor[date];
+      return nBridge("PATCH", "/v1/blocks/" + pid + "/children", body);
+    }
+    let d;
+    try{
+      d = await attempt(true);
+    }catch(err){
+      // 기준 블록이 지워졌으면 페이지를 다시 읽어 한 번만 재시도
+      if(!(err.status === 400 || err.status === 404) || !NT.anchor[date]) throw err;
+      nApply(date, await nReadPage(pid));
+      d = await attempt(true);
+    }
+    const last = lines[lines.length - 1];
+    const made = ((d && d.results) || []).filter(b => b.type === "paragraph" && plain(b.paragraph.rich_text) === last).pop();
+    if(made) NT.anchor[date] = made.id;
+    nOk();
+  }
+
+  async function nRefresh(date, keepScroll){
+    const pid = NT.pages[date];
+    if(!pid) return;
+    try{
+      const changed = nApply(date, await nReadPage(pid));
+      nOk();
+      if(date === ST.current && (changed || !keepScroll)) renderChat(keepScroll);
+      if(changed){ renderDrawer(); nUpdatePins(); }
+    }catch(err){ nFail(err); }
+  }
+
+  function setSending(on){
+    ST.busy = on;
+    const b = $("#chatForm .send");
+    if(b) b.disabled = on;
+  }
+
+  async function nSend(text){
+    const date = ST.current;
+    const target = resolveTarget(text);
+    const hist = hasKey() ? threadHistory(target) : [];
+    const item = {name:"대표님", text:text, at:nowISO(), oid:"o" + Date.now(), sending:true};
+    nExtra(date).push(item);
+    nRebuild(date); renderChat();
+    setSending(true);
+    try{
+      try{
+        await nWrite(date, [{name:"대표님", text:text}]);
+        NT.extra[date] = nExtra(date).filter(m => m !== item);
+      }catch(err){
+        item.sending = false; item.failed = true;
+        nSaveOutbox(date); nFail(err);
+        nRebuild(date); renderChat();
+        toast(nExplain(err));
+        return;
+      }
+      await nRefresh(date, false);
+      if(!hasKey()){ toast("노션에 올렸어요"); return; }
+
+      addTyping();
+      let reply;
+      try{
+        reply = await askAI(target, hist, text);
+      }catch(err){
+        removeTyping();
+        nExtra(date).push({name:"안내", kind:"error", text:explainError(err), at:nowISO(), oid:"e" + Date.now()});
+        nRebuild(date); renderChat();
+        return;
+      }
+      removeTyping();
+      const who = PERSONAS[target].name;
+      try{
+        await nWrite(date, [{name:who, text:reply}]);
+      }catch(err){
+        nExtra(date).push({name:who, text:reply, at:nowISO(), oid:"o" + Date.now(), failed:true});
+        nSaveOutbox(date); nFail(err);
+        toast(nExplain(err));
+      }
+      await nRefresh(date, false);
+      nRebuild(date); renderChat();
+    }finally{
+      setSending(false);
+    }
+  }
+
+  async function nRetryOutbox(){
+    const date = ST.current;
+    const failed = nExtra(date).filter(m => m.failed);
+    if(!failed.length || ST.busy) return;
+    setSending(true);
+    try{
+      await nWrite(date, failed.map(m => ({name:m.name, text:m.text})));
+      NT.extra[date] = nExtra(date).filter(m => !m.failed);
+      nSaveOutbox(date);
+      await nRefresh(date, false);
+      nRebuild(date); renderChat();
+      toast(failed.length + "건을 노션에 올렸어요");
+    }catch(err){
+      nFail(err); toast(nExplain(err));
+    }finally{
+      setSending(false);
+    }
+  }
+
+  function nRenderOutbox(box){
+    const failed = nExtra(ST.current).filter(m => m.failed);
+    if(!failed.length){ box.hidden = true; box.innerHTML = ""; return; }
+    box.hidden = false;
+    box.innerHTML = '<b>' + failed.length + '건이 노션에 올라가지 못했어요.</b> 연결이 돌아오면 다시 보내 주세요.' +
+      '<div class="row">' +
+        '<button class="mini dark" id="retryOutbox">노션에 다시 보내기</button>' +
+        '<button class="mini" id="dropOutbox">지우기</button>' +
+      '</div>';
+    $("#retryOutbox").addEventListener("click", nRetryOutbox);
+    $("#dropOutbox").addEventListener("click", ()=>{
+      if(!window.confirm("올라가지 못한 " + failed.length + "건을 이 기기에서 지울까요?")) return;
+      NT.extra[ST.current] = nExtra(ST.current).filter(m => !m.failed);
+      nSaveOutbox(ST.current);
+      nRebuild(ST.current); renderChat();
+    });
+  }
+
+  /* ---- 10초 폴링: 회의실이 화면에 있고 앱이 앞에 있을 때만 ---- */
+  function meetingVisible(){
+    const sec = document.getElementById("tab-meeting");
+    return !document.hidden && sec && !sec.hidden;
+  }
+  async function nPoll(force){
+    if(!NT.on || NT.polling) return;
+    if(!force && (!meetingVisible() || ST.busy)) return;
+    if(Date.now() < NT.backoffUntil) return;
+    NT.polling = true;
+    try{ await nRefresh(ST.current, true); }
+    finally{ NT.polling = false; }
+  }
+  function nStartPolling(){
+    if(NT.timer) return;
+    NT.timer = setInterval(()=> nPoll(false), POLL_MS);
+    document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) nPoll(true); });
+    $$(".navbtn").forEach(b => b.addEventListener("click", ()=>{ if(b.dataset.tab === "meeting") nPoll(true); }));
+  }
+  window.__virelNative = window.__virelNative || {};
+  window.__virelNative.resume = function(){ if(NT.on) nPoll(true); };
+
+  /* ---- 오피스 마커: 오늘 노션에서 각 멤버가 마지막으로 한 말 ---- */
+  function nUpdatePins(){
+    if(!NT.on) return;
+    const msgs = NT.msgs[ST.today] || [];
+    ["gemini", "seoha"].forEach(k=>{
+      const pin = document.querySelector('.pin[data-member="' + k + '"] .sub');
+      if(!pin) return;
+      const last = msgs.slice().reverse().find(m => m.name === MEMBERS[k].name);
+      const t = last ? String(last.text).replace(/\s+/g, " ") : MEMBERS[k].label;
+      pin.textContent = shorten(t, 18);
+      pin.title = t;
+    });
+  }
+
+  /* ---- 설정 시트의 노션 연동 칸 ---- */
+  function renderNotionStatus(){
+    const f = $("#notionField");
+    if(!f) return;
+    if(!NATIVE){ f.hidden = true; return; }
+    f.hidden = false;
+    const st = $("#notionStatus");
+    const pages = Object.keys(NT.pages).length;
+    if(!nativeHasToken()){
+      st.innerHTML = "<b>토큰이 없어요.</b> 토큰을 넣으면 노션 허브의 날짜별 회의실 페이지를 앱이 직접 읽고 씁니다. 지금은 앱에 들어 있는 샘플 기록을 보여 줘요.";
+    }else if(NT.err){
+      st.innerHTML = "<b>연결 오류</b> · " + escapeHtml(nExplain(NT.err));
+    }else{
+      st.innerHTML = "<b>연결됨</b> · 허브 날짜 페이지 " + pages + "개 · 회의실이 열려 있으면 10초마다 새로 읽어요." +
+        (NT.lastOk ? " 마지막 동기화 " + fmtTime(new Date(NT.lastOk).toISOString()) : "");
+    }
+  }
+
+  async function nBoot(){
+    NT.on = nativeHasToken();
+    if(!NT.on) return false;
+    try{
+      await nRefreshDates(true);
+    }catch(err){
+      const cached = load(NCACHE_PREFIX + "dates", []);
+      nMergeDates(Array.isArray(cached) ? cached : []);
+      toast(nExplain(err));
+    }
+    $(".dtip").innerHTML = "노션 허브 아래 <b>YYYY-MM-DD 회의실</b> 페이지가 자동으로 여기에 나타나요. 오늘 페이지가 없으면 첫 메시지를 보낼 때 앱이 만들어요.";
+    $("#openSync").textContent = "대화 붙여넣기 · 복사";
+    $("#syncSheet .notice").innerHTML = "붙여넣은 <b>이름 : 멘트</b> 줄은 지금 날짜의 노션 페이지에 바로 올라가요. 전체 복사는 다른 AI에게 대화를 넘길 때 쓰세요.";
+    $("#clearChat").hidden = true;
+    nStartPolling();
+    return true;
+  }
+
+  window.__virelNative.onToken = async function(){
+    toast("토큰을 저장했어요 · 노션 연결 확인 중");
+    NT.msgs = {}; NT.sig = {}; NT.anchor = {}; ST.loaded = {};
+    const ok = await nBoot();
+    renderMode(); renderNotionStatus();
+    if(ok){
+      await selectDate(ST.dates.some(e => e.date === ST.current) ? ST.current : ST.today);
+      if(!NT.err) toast("노션에 연결됐어요 · 날짜 페이지 " + Object.keys(NT.pages).length + "개");
+    }
+  };
 
   /* ---- UI wiring ---- */
   $("#personaChips").addEventListener("click", e=>{
@@ -1636,6 +2162,19 @@
   $("#syncImport").addEventListener("click", ()=>{
     const parsed = parseChatLines($("#syncText").value);
     if(parsed.length === 0){ toast("이름 : 멘트 형식으로 붙여넣어 주세요"); return; }
+    if(NT.on){
+      if(ST.busy) return;
+      const have = new Set(currentMsgs().map(mkey));
+      const fresh = parsed.filter(p => !have.has(mkey(p)));
+      if(!fresh.length){ closeSync(); toast("이미 노션에 있는 대화예요"); return; }
+      setSending(true);
+      nWrite(ST.current, fresh.slice(0, 100))
+        .then(()=> nRefresh(ST.current, false))
+        .then(()=>{ closeSync(); renderDrawer(); toast("노션에 " + Math.min(fresh.length, 100) + "줄 올렸어요"); })
+        .catch(err=>{ nFail(err); toast(nExplain(err)); })
+        .finally(()=> setSending(false));
+      return;
+    }
     const msgs = currentMsgs();
     const seen = new Set(msgs.map(mkey));
     let added = 0;
@@ -1655,14 +2194,9 @@
     else toast("복사가 막혔어요. 길게 눌러 복사해 주세요");
   });
   $("#syncDownload").addEventListener("click", ()=>{
-    const payload = {date: ST.current, messages: currentMsgs().map(m=>({name: m.name, text: m.text}))};
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "chat-" + ST.current + ".json";
-    document.body.appendChild(a); a.click();
-    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
-    toast("JSON 파일을 내려받았어요");
+    const payload = {date: ST.current, messages: currentMsgs().filter(m => !m.kind).map(m=>({name: m.name, text: m.text}))};
+    download("chat-" + ST.current + ".json", JSON.stringify(payload, null, 2));
+    if(!NATIVE) toast("JSON 파일을 내려받았어요");
   });
 
   /* ---- settings sheet ---- */
@@ -1673,8 +2207,30 @@
     $("#keyInput").value = aiCfg.key || "";
     $("#modelInput").value = aiCfg.model || "";
     $("#modelInput").placeholder = MODELS[aiCfg.provider] || "";
+    renderNotionStatus();
   }
   function closeSheet(){ $("#settingsSheet").hidden = true; }
+  if(NATIVE){
+    $("#notionToken").addEventListener("click", ()=>{ try{ NATIVE.openTokenDialog(); }catch(e){} });
+    $("#notionTest").addEventListener("click", async ()=>{
+      if(!nativeHasToken()){ toast("먼저 토큰을 넣어 주세요"); return; }
+      $("#notionStatus").textContent = "확인 중…";
+      try{
+        const list = await nListDates();
+        nOk();
+        if(NT.on) nMergeDates(list);
+        renderNotionStatus(); renderDrawer();
+        toast("연결됐어요 · 날짜 페이지 " + list.length + "개");
+      }catch(err){
+        nFail(err); toast(nExplain(err));
+      }
+    });
+    $("#notionClear").addEventListener("click", ()=>{
+      if(!window.confirm("이 기기에 저장된 노션 토큰을 지울까요? 다시 쓰려면 토큰을 새로 넣어야 해요.")) return;
+      try{ NATIVE.clearToken(); }catch(e){}
+      location.reload();
+    });
+  }
   $("#openSettings").addEventListener("click", openSheet);
   $("#closeSettings").addEventListener("click", closeSheet);
   $("#settingsSheet").addEventListener("click", e=>{ if(e.target === $("#settingsSheet")) closeSheet(); });
@@ -1709,16 +2265,21 @@
   /* ---- boot ---- */
   (async function bootRoom(){
     ST.today = kstDateString();
-    let idx = await loadIndex();
-    idx = (Array.isArray(idx) ? idx : []).map(normalizeEntry).filter(e => e.date);
-    if(!idx.some(e => e.date === ST.today)){
-      idx.unshift({date: ST.today, label:"오늘", notion:null, sample:false});
-    }
-    idx.sort((a,b)=> b.date.localeCompare(a.date));
-    ST.dates = idx;
     renderChips();
-    renderMode();
-    await Promise.all(idx.map(e => loadChat(e.date)));
+    if(await nBoot()){
+      renderMode();
+    }else{
+      let idx = await loadIndex();
+      idx = (Array.isArray(idx) ? idx : []).map(normalizeEntry).filter(e => e.date);
+      if(!idx.some(e => e.date === ST.today)){
+        idx.unshift({date: ST.today, label:"오늘", notion:null, sample:false});
+      }
+      idx.sort((a,b)=> b.date.localeCompare(a.date));
+      ST.dates = idx;
+      renderMode();
+      await Promise.all(idx.map(e => loadChat(e.date)));
+      if(NATIVE) toast("⚙︎ 설정에서 노션 토큰을 넣으면 노션과 실시간으로 연결돼요");
+    }
     const hashDate = (location.hash || "").replace("#","");
     const start = ST.dates.some(e => e.date === hashDate) ? hashDate : ST.today;
     await selectDate(start);
@@ -1729,7 +2290,18 @@
   if(TAB_IDS[initial]) selectTab(initial);
 
   /* ---------------- PWA service worker ---------------- */
-  if("serviceWorker" in navigator){
+  /* ---------------- 안드로이드 뒤로가기 ---------------- */
+  window.__virelBack = function(){
+    if(!$("#settingsSheet").hidden){ closeSheet(); return true; }
+    if(!$("#syncSheet").hidden){ closeSync(); return true; }
+    if($("#drawer").classList.contains("open")){ closeDrawer(); return true; }
+    const cur = Object.keys(TAB_IDS).find(k => !document.getElementById(TAB_IDS[k]).hidden);
+    if(cur && cur !== "office"){ selectTab("office"); return true; }
+    return false;
+  };
+
+  /* 앱(APK)은 파일을 앱 안에 들고 있으므로 서비스 워커가 필요 없다 */
+  if(!NATIVE && "serviceWorker" in navigator){
     window.addEventListener("load", ()=>{
       navigator.serviceWorker.register("sw.js", {scope:"./"}).catch(()=>{});
     });
