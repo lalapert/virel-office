@@ -409,8 +409,8 @@
   .dttl{font-size:15px; font-weight:760; letter-spacing:-0.03em;}
   .dclose{margin-left:auto; width:30px;height:30px;border-radius:9px; border:1px solid var(--line); background:var(--paper); font-size:12px; color:var(--ink2);}
   .dsub{margin:5px 0 0; font-size:11px; color:var(--muted);}
-  .dlist{list-style:none; margin:12px -4px 0; padding:0 4px; overflow-y:auto; flex:1;}
-  .dlist li + li{margin-top:3px;}
+  .datelist{list-style:none; margin:12px -4px 0; padding:0 4px; overflow-y:auto; flex:1;}
+  .datelist li + li{margin-top:3px;}
   .ditem{
     width:100%; display:flex; align-items:center; gap:8px; text-align:left;
     padding:10px 10px; border-radius:13px; color:var(--ink);
@@ -481,11 +481,11 @@
     nav{max-width:560px; left:50%; transform:translateX(-50%); border-radius:16px 16px 0 0; box-shadow:0 -6px 24px -18px rgba(60,40,20,.5);}
   }
   @media (max-width:430px){
-    .hdr{gap:7px;}
+    .hdr{gap:6px;}
+    .brand p{font-size:10px; letter-spacing:-0.03em;}
     .hburger{width:32px; height:32px; border-radius:10px;}
     .vbadge{width:34px; height:34px; border-radius:10px; font-size:14px;}
     .brand h1{font-size:15px;}
-    .brand p{font-size:10.5px;}
     .live{font-size:9px; padding:3px 6px; letter-spacing:.06em;}
     .notion-btn{font-size:10.5px; padding:5px 7px; border-radius:9px;}
     .app{padding:0 14px;}
@@ -650,7 +650,7 @@
     <button class="dclose" id="closeDrawer" aria-label="닫기">✕</button>
   </div>
   <p class="dsub">날짜를 고르면 그날 대화로 바뀌어요.</p>
-  <ul class="dlist" id="dateList"></ul>
+  <ul class="datelist" id="dateList"></ul>
   <div class="dfoot">대화는 노션 날짜 페이지와 웹앱이 <b>이름 : 멘트</b> 형식으로 오갑니다.</div>
 </aside>
 
